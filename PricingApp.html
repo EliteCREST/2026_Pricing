@@ -577,7 +577,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.0.0</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.1.0</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -624,7 +624,7 @@
 
 <div class="toolbar">
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search across all columns…">
+    <input type="text" id="searchInput" placeholder="Search across all columns…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </div>
   <button class="action secondary" id="clearAllBtn" title="Clear search + all filters">✕ Clear</button>
   <div class="filter-chip" data-filter="ST">State <span class="count"></span></div>
@@ -1410,6 +1410,9 @@ function escapeHtml(s) {
 // EVENT WIRE-UP
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Force-clear search input on load (some browsers restore previous value)
+  const _si = document.getElementById('searchInput');
+  if (_si) _si.value = '';
   // Search
   let searchTimer;
   document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -1485,7 +1488,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.0.0';
+  const APP_VERSION = 'v1.1.0';
   let isUnlocked = false;
 
   function showLogin() {
