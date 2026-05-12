@@ -2427,6 +2427,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (field === 'brand') { rowObj.epn = ''; rowObj.color = ''; rowObj.uom = ''; }
           else if (field === 'epn') { rowObj.color = ''; rowObj.uom = ''; }
           else if (field === 'color') { rowObj.uom = ''; }
+          // BRAND MIRROR: when Shingle's brand changes, force Hip & Ridge + Starter to match
+          if (field === 'brand' && rowObj.type === 'Shingle') {
+            for (const other of calcState.rows) {
+              if (other.id === rowObj.id) continue;
+              if (other.type === 'Hip & Ridge' || other.type === 'Starter') {
+                other.brand = val;
+                other.epn = '';
+                other.color = '';
+                other.uom = '';
+                autoFillUOM(other);
+              }
+            }
+          }
           // Auto-fill UOM if only one option after the change
           autoFillUOM(rowObj);
           renderCalcTable();
