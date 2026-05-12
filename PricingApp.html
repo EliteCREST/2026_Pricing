@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECS Pricing Data Manager</title>
+<style>
+  :root {
+    --navy: #1B2A4A;
+    --blue: #1F5FAD;
+    --blue-light: #4A8BD9;
+    --blue-bg: #E8F0FA;
+    --orange: #F4B084;
+    --green: #6FBF73;
+    --red: #D9534F;
+    --gray-50: #F8F9FA;
+    --gray-100: #E9ECEF;
+    --gray-200: #DEE2E6;
+    --gray-300: #CED4DA;
+    --gray-500: #6C757D;
+    --gray-700: #495057;
+    --gray-900: #212529;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: var(--gray-900);
+    background: var(--gray-50);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow);
+    height: 56px;
+  }
+  header h1 {
+    margin: 0; font-size: 18px; font-weight: bold;
+    letter-spacing: 0.3px;
+  }
+  header .accent { color: var(--blue-light); }
+  header .status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px;
+  }
+  header .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--gray-500);
+    display: inline-block;
+  }
+  header .status-dot.ok { background: var(--green); }
+  header .status-dot.warn { background: var(--orange); }
+  header .status-dot.error { background: var(--red); }
+  header button {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  header button:hover { background: var(--blue-light); }
+  header button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ============ TOOLBAR ============ */
+  .toolbar {
+    background: #fff;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1; min-width: 250px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .search-box::before {
+    content: "🔍";
+    position: absolute;
+    left: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 14px;
+  }
+  .filter-chip {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+  }
+  .filter-chip:hover { background: var(--gray-200); }
+  .filter-chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .filter-chip .count { opacity: 0.7; margin-left: 4px; }
+  .filter-chip .dropdown {
+    display: none;
+    position: absolute;
+    top: 100%; left: 0;
+    background: #fff;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+    margin-top: 4px;
+    min-width: 220px;
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 100;
+    padding: 6px 0;
+    color: var(--gray-900);
+  }
+  .filter-chip.open .dropdown { display: block; }
+  .filter-chip .dropdown label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .filter-chip .dropdown label:hover { background: var(--gray-100); }
+  .filter-chip .dropdown input { margin: 0; }
+  .filter-chip .clear-btn {
+    display: block; width: 100%;
+    padding: 6px 12px;
+    background: none; border: none;
+    text-align: left; color: var(--blue); cursor: pointer;
+    font-size: 12px; font-weight: bold;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 4px;
+  }
+  .filter-chip .clear-btn:hover { background: var(--gray-100); }
+
+  button.action {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button.action:hover { background: var(--blue-light); }
+  button.action.secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+  }
+  button.action.secondary:hover { background: var(--gray-200); }
+
+  /* ============ STATUS BAR ============ */
+  .status-bar {
+    background: var(--blue-bg);
+    padding: 6px 16px;
+    font-size: 12px;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex; gap: 16px; align-items: center;
+  }
+  .status-bar strong { color: var(--navy); }
+
+  /* ============ TABLE ============ */
+  .table-wrap {
+    height: calc(100vh - 56px - 49px - 31px);
+    overflow: auto;
+    background: #fff;
+    position: relative;
+  }
+  table.data {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+  }
+  table.data thead th {
+    background: var(--navy);
+    color: #fff;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  table.data thead th:hover { background: var(--blue); }
+  table.data thead th .sort-indicator { margin-left: 4px; opacity: 0.6; font-size: 10px; }
+  table.data tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--gray-100);
+    white-space: nowrap;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  table.data tbody tr:nth-child(even) td { background: var(--gray-50); }
+  table.data tbody tr:hover td { background: var(--blue-bg); cursor: pointer; }
+  table.data tbody tr.selected td { background: var(--blue-bg) !important; }
+  table.data td.numeric { text-align: right; font-family: Consolas, monospace; }
+  table.data td.code { font-family: Consolas, monospace; font-size: 11px; }
+
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--gray-500);
+  }
+  .empty-state h2 { color: var(--navy); margin-bottom: 8px; }
+
+  /* ============ EDIT PANEL ============ */
+  .edit-panel {
+    position: fixed;
+    right: -560px;
+    top: 0;
+    height: 100vh;
+    width: 560px;
+    background: #fff;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.2);
+    transition: right 0.25s ease;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+  }
+  .edit-panel.open { right: 0; }
+  .edit-panel-header {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .edit-panel-header h2 { margin: 0; font-size: 16px; }
+  .edit-panel-header button {
+    background: none; border: none;
+    color: #fff; font-size: 22px;
+    cursor: pointer; line-height: 1;
+    padding: 0 4px;
+  }
+  .edit-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+  .edit-panel-body .field {
+    margin-bottom: 12px;
+  }
+  .edit-panel-body label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--gray-700);
+    font-size: 12px;
+  }
+  .edit-panel-body input,
+  .edit-panel-body select,
+  .edit-panel-body textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .edit-panel-body input.derived,
+  .edit-panel-body input.readonly {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    font-family: Consolas, monospace;
+    font-size: 12px;
+  }
+  .edit-panel-body .field-group {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--gray-200);
+  }
+  .edit-panel-body .field-group-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--blue);
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .edit-panel-footer {
+    border-top: 1px solid var(--gray-200);
+    padding: 14px 20px;
+    display: flex; gap: 8px;
+    justify-content: flex-end;
+    background: var(--gray-50);
+  }
+  .edit-panel-footer button {
+    padding: 8px 18px;
+    border-radius: 4px;
+    border: none;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .edit-panel-footer .save { background: var(--blue); color: #fff; }
+  .edit-panel-footer .save:hover { background: var(--blue-light); }
+  .edit-panel-footer .cancel { background: var(--gray-200); color: var(--gray-700); }
+  .edit-panel-footer .delete { background: var(--red); color: #fff; margin-right: auto; }
+  .edit-panel-footer button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ============ COLUMN PICKER ============ */
+  .col-picker {
+    position: absolute;
+    background: #fff;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+    padding: 8px 0;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 100;
+    min-width: 200px;
+  }
+  .col-picker label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .col-picker label:hover { background: var(--gray-100); }
+
+  /* ============ MODAL ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: var(--shadow-lg);
+    min-width: 400px;
+    max-width: 600px;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    background: var(--navy);
+    color: #fff;
+    border-radius: 6px 6px 0 0;
+  }
+  .modal-header h3 { margin: 0; font-size: 16px; }
+  .modal-body { padding: 20px; }
+  .modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--gray-200);
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+
+  /* ============ TOAST ============ */
+  .toast {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+    z-index: 2000;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s ease;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { background: var(--red); }
+  .toast.success { background: var(--green); }
+
+  /* ============ LOADING ============ */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 3000;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--gray-200);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { margin-top: 16px; color: var(--navy); font-weight: bold; }
+
+  /* ============ SETTINGS MENU ============ */
+  .settings-wrap {
+    position: relative;
+  }
+  .settings-menu {
+    display: none;
+    position: absolute;
+    top: 100%; right: 0;
+    background: #fff;
+    color: var(--gray-900);
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+    min-width: 280px;
+    margin-top: 6px;
+    z-index: 200;
+    overflow: hidden;
+  }
+  .settings-menu.open { display: block; }
+  .settings-menu .header {
+    padding: 10px 14px;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    font-weight: bold;
+    font-size: 12px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .settings-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    color: var(--gray-900);
+    text-decoration: none;
+    font-size: 13px;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+  }
+  .settings-menu a:hover { background: var(--blue-bg); color: var(--blue); }
+  .settings-menu a:last-child { border-bottom: none; }
+  .settings-menu .icon {
+    font-size: 16px; width: 20px; text-align: center;
+  }
+  .settings-menu .label-sub {
+    font-size: 11px; color: var(--gray-500); margin-top: 2px;
+  }
+  .settings-menu .label-main {
+    display: flex; flex-direction: column;
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ECS <span class="accent">Pricing Data Manager</span></h1>
+  <div class="status">
+    <span class="status-dot" id="connStatus"></span>
+    <span id="connText">Connecting…</span>
+    <span id="lastSync"></span>
+    <button id="refreshBtn">↻ Refresh</button>
+    <div class="settings-wrap">
+      <button id="settingsBtn">⚙ Settings</button>
+      <div class="settings-menu" id="settingsMenu">
+        <div class="header">Links</div>
+        <a href="https://docs.google.com/spreadsheets/d/1-fHxAfGmBr-kN-a2z9ScPvqUx0SWYAZ79SuNKr7HBQw/edit" target="_blank">
+          <span class="icon">📊</span>
+          <span class="label-main">
+            <span>Open Google Sheet</span>
+            <span class="label-sub">Edit data directly in Sheets</span>
+          </span>
+        </a>
+        <a href="https://script.google.com/u/0/home/projects/1KXY7PWUo6Xd3B-cqUhCfOCSCyQu_Dw_GVBT-zpJ5OgtC-Qmm3ulU31yI/edit" target="_blank">
+          <span class="icon">📝</span>
+          <span class="label-main">
+            <span>Open Apps Script</span>
+            <span class="label-sub">View or edit backend code</span>
+          </span>
+        </a>
+        <a href="https://script.google.com/macros/s/AKfycbyb9WFx1OOuNtst5xixAhygv_bNrMQZ0Rntn4ewMfx09NcRwHzObC9tXc5io_MOS8NP/exec" target="_blank">
+          <span class="icon">🔗</span>
+          <span class="label-main">
+            <span>API Endpoint</span>
+            <span class="label-sub">Test the deployed web app</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search across all columns…">
+  </div>
+  <div class="filter-chip" data-filter="ST">State <span class="count"></span></div>
+  <div class="filter-chip" data-filter="SUPPLIER">Supplier <span class="count"></span></div>
+  <div class="filter-chip" data-filter="Type">Type <span class="count"></span></div>
+  <div class="filter-chip" data-filter="Brand">Brand <span class="count"></span></div>
+  <div class="filter-chip" data-filter="Color">Color <span class="count"></span></div>
+  <div class="filter-chip" data-filter="Price UOM">UOM <span class="count"></span></div>
+  <button class="action secondary" id="colPickerBtn">⚙ Columns</button>
+  <button class="action secondary" id="exportBtn">⬇ Export CSV</button>
+  <button class="action" id="addRowBtn">+ Add Row</button>
+</div>
+
+<div class="status-bar">
+  <span>Showing <strong id="visibleCount">0</strong> of <strong id="totalCount">0</strong> rows</span>
+  <span id="activeFilters"></span>
+</div>
+
+<div class="table-wrap" id="tableWrap">
+  <table class="data" id="dataTable">
+    <thead><tr id="headerRow"></tr></thead>
+    <tbody id="bodyRows"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <h2>No matching rows</h2>
+    <p>Try adjusting your filters or search query.</p>
+  </div>
+</div>
+
+<!-- Edit Panel -->
+<div class="edit-panel" id="editPanel">
+  <div class="edit-panel-header">
+    <h2 id="editPanelTitle">Edit Row</h2>
+    <button id="editPanelClose">×</button>
+  </div>
+  <div class="edit-panel-body" id="editPanelBody">
+    <!-- fields populated dynamically -->
+  </div>
+  <div class="edit-panel-footer">
+    <button class="delete" id="deleteBtn">🗑 Delete</button>
+    <button class="cancel" id="cancelBtn">Cancel</button>
+    <button class="save" id="saveBtn">💾 Save</button>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="confirmTitle">Confirm</h3></div>
+    <div class="modal-body" id="confirmMessage"></div>
+    <div class="modal-footer">
+      <button class="action secondary" id="confirmCancelBtn">Cancel</button>
+      <button class="action" id="confirmOkBtn" style="background:var(--red)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Loading…</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG — UPDATE THIS URL after deploying your Apps Script
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbyb9WFx1OOuNtst5xixAhygv_bNrMQZ0Rntn4ewMfx09NcRwHzObC9tXc5io_MOS8NP/exec';
+
+const CACHE_KEY = 'ecs_pricing_v1';
+const REFRESH_INTERVAL_MS = 30000;
+
+function safeCache(obj) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(obj));
+  } catch (e) {
+    // Quota exceeded or other storage issue — non-fatal, just skip
+    console.warn('localStorage cache skipped:', e.message);
+  }
+}
+
+// All columns in the expected order
+const ALL_COLUMNS = [
+  'SUPPLIER','ST','Product ID','Branch ID','Item #','Item Color','Item',
+  'Type','Type Code','Description','Description Code','Brand','BrandLine',
+  'Elite Product Name','Measurement','Color','Color Code','Price UOM',
+  'Current Price','Blaze Code','Price Sheet'
+];
+
+const DEFAULT_VISIBLE = new Set([
+  'SUPPLIER','ST','Item #','Item Color','Type','Brand','Elite Product Name',
+  'Color','Price UOM','Current Price','Blaze Code'
+]);
+
+const DERIVED_FIELDS = new Set(['Type Code','Description Code','Color Code','Item #','Item Color','Blaze Code']);
+const NUMERIC_FIELDS = new Set(['Current Price']);
+const CODE_FIELDS = new Set(['Type Code','Description Code','Color Code','Blaze Code','Item #','Item Color','Item']);
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  rows: [],
+  filtered: [],
+  typeCodes: [],
+  skuChart: [],
+  colorChart: [],
+  visibleColumns: new Set(DEFAULT_VISIBLE),
+  sortBy: null,
+  sortDir: 'asc',
+  search: '',
+  filters: {},
+  editingRow: null,
+  isAddingRow: false,
+  serverTime: null
+};
+
+const TYPE_RANK = {
+  'Shingle':1,'Hip & Ridge':2,'Starter':3,'Underlayment':4,'Ice & Water':5,'Low/Flat Roof':5.5,
+  'Ventilation':6,'Gable Vent':6.5,'Pipe Boot':7,'Flashing':8,'Coil Nail':9,'Roofing Nail':9.1,
+  'Plastic Cap Nail':9.2,'Trim Nail':9.3,'Siding Nail':9.4,'Staple':9.5,'Hand Nail':9.6,
+  'Adhesive/Caulk':10,'Paint':10.5,'Housewrap':11,'Tape':11.5,'Fanfold':12,'Siding':13,'Lumber':13.5,
+  'Corner Post':14,'J Channel':15,'F Channel':15.5,'Trim':16,'Trim Coil':16.3,'Fascia':16.5,
+  'Mount/Block':17,'Soffit':18,'Shutter':18.5,'Skylight':18.7,'TPO':19,'Slate':19.5,'Shake':19.7
+};
+
+// ============================================================
+// API CALLS
+// ============================================================
+async function apiCall(action, payload = {}) {
+  const body = JSON.stringify({ action, ...payload });
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    body: body,
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  if (!data.ok) throw new Error(data.error || 'API error');
+  return data;
+}
+
+async function loadBootstrap(useCache = true) {
+  showLoading('Loading data…');
+  setConnectionStatus('connecting');
+  try {
+    const data = await apiCall('bootstrap');
+    applyBootstrap(data);
+    // Cache only the small lookups (rawData is too big for localStorage)
+    safeCache({
+      typeCodes: data.typeCodes,
+      skuChart: data.skuChart,
+      colorChart: data.colorChart,
+      serverTime: data.serverTime
+    });
+    setConnectionStatus('ok');
+    setLastSync(`Synced ${new Date().toLocaleTimeString()}`);
+  } catch (err) {
+    console.error(err);
+    setConnectionStatus('error');
+    toast(`Failed to load: ${err.message}`, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function applyBootstrap(data) {
+  state.rows = data.rawData || [];
+  state.typeCodes = data.typeCodes || [];
+  state.skuChart = data.skuChart || [];
+  state.colorChart = data.colorChart || [];
+  state.serverTime = data.serverTime;
+  document.getElementById('totalCount').textContent = state.rows.length;
+  // Initial sort: state → type-rank → brand → product
+  if (!state.sortBy) {
+    state.rows.sort((a, b) => compareRowsDefault(a, b));
+  }
+  applyFiltersAndRender();
+  buildFilterChips();
+  buildHeaderRow();
+}
+
+function compareRowsDefault(a, b) {
+  const aS = (a.ST || '').toString();
+  const bS = (b.ST || '').toString();
+  if (aS !== bS) return aS.localeCompare(bS);
+  const aR = TYPE_RANK[a.Type] || 99;
+  const bR = TYPE_RANK[b.Type] || 99;
+  if (aR !== bR) return aR - bR;
+  const aB = (a.Brand || '').toString();
+  const bB = (b.Brand || '').toString();
+  if (aB !== bB) return aB.localeCompare(bB);
+  const aP = (a['Elite Product Name'] || '').toString();
+  const bP = (b['Elite Product Name'] || '').toString();
+  return aP.localeCompare(bP);
+}
+
+// ============================================================
+// FILTERS & SEARCH
+// ============================================================
+function applyFiltersAndRender() {
+  const q = (state.search || '').toLowerCase().trim();
+  state.filtered = state.rows.filter(row => {
+    // Filter chips
+    for (const [col, vals] of Object.entries(state.filters)) {
+      if (!vals || vals.size === 0) continue;
+      const v = (row[col] == null ? '' : String(row[col]));
+      if (!vals.has(v)) return false;
+    }
+    // Search
+    if (q) {
+      let match = false;
+      for (const col of ALL_COLUMNS) {
+        const v = row[col];
+        if (v == null) continue;
+        if (String(v).toLowerCase().includes(q)) { match = true; break; }
+      }
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  // Apply custom sort if any
+  if (state.sortBy) {
+    state.filtered.sort((a, b) => {
+      let av = a[state.sortBy];
+      let bv = b[state.sortBy];
+      // Numeric for price
+      if (NUMERIC_FIELDS.has(state.sortBy)) {
+        av = parseFloat(av); bv = parseFloat(bv);
+        if (isNaN(av)) av = -Infinity;
+        if (isNaN(bv)) bv = -Infinity;
+        return state.sortDir === 'asc' ? av - bv : bv - av;
+      }
+      av = (av == null ? '' : String(av));
+      bv = (bv == null ? '' : String(bv));
+      return state.sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+  }
+
+  renderTable();
+  updateFilterUI();
+}
+
+function buildFilterChips() {
+  document.querySelectorAll('.filter-chip[data-filter]').forEach(chip => {
+    const col = chip.dataset.filter;
+    const values = new Set();
+    state.rows.forEach(r => {
+      const v = r[col];
+      if (v != null && String(v).trim() !== '') values.add(String(v));
+    });
+    const sorted = Array.from(values).sort();
+    // Build dropdown
+    let dd = chip.querySelector('.dropdown');
+    if (!dd) {
+      dd = document.createElement('div');
+      dd.className = 'dropdown';
+      chip.appendChild(dd);
+    }
+    dd.innerHTML = '';
+    sorted.forEach(v => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" data-val="${escapeHtml(v)}"> <span>${escapeHtml(v)}</span>`;
+      dd.appendChild(label);
+      label.querySelector('input').addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (!state.filters[col]) state.filters[col] = new Set();
+        if (e.target.checked) state.filters[col].add(v);
+        else state.filters[col].delete(v);
+        applyFiltersAndRender();
+      });
+    });
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear-btn';
+    clearBtn.textContent = 'Clear';
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.filters[col]) state.filters[col].clear();
+      dd.querySelectorAll('input').forEach(cb => cb.checked = false);
+      applyFiltersAndRender();
+    });
+    dd.appendChild(clearBtn);
+  });
+}
+
+function updateFilterUI() {
+  document.querySelectorAll('.filter-chip[data-filter]').forEach(chip => {
+    const col = chip.dataset.filter;
+    const count = state.filters[col] ? state.filters[col].size : 0;
+    const countEl = chip.querySelector('.count');
+    if (count > 0) {
+      chip.classList.add('active');
+      countEl.textContent = `(${count})`;
+    } else {
+      chip.classList.remove('active');
+      countEl.textContent = '';
+    }
+  });
+  // Active filter summary
+  const parts = [];
+  for (const [col, vals] of Object.entries(state.filters)) {
+    if (vals && vals.size > 0) {
+      parts.push(`${col}: ${Array.from(vals).join(', ')}`);
+    }
+  }
+  document.getElementById('activeFilters').textContent =
+    parts.length ? ' · Filters: ' + parts.join(' | ') : '';
+}
+
+// ============================================================
+// TABLE RENDERING
+// ============================================================
+function buildHeaderRow() {
+  const tr = document.getElementById('headerRow');
+  tr.innerHTML = '';
+  ALL_COLUMNS.forEach(col => {
+    if (!state.visibleColumns.has(col)) return;
+    const th = document.createElement('th');
+    th.textContent = col;
+    th.dataset.col = col;
+    if (state.sortBy === col) {
+      const ind = document.createElement('span');
+      ind.className = 'sort-indicator';
+      ind.textContent = state.sortDir === 'asc' ? '▲' : '▼';
+      th.appendChild(ind);
+    }
+    th.addEventListener('click', () => {
+      if (state.sortBy === col) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortBy = col;
+        state.sortDir = 'asc';
+      }
+      applyFiltersAndRender();
+      buildHeaderRow();
+    });
+    tr.appendChild(th);
+  });
+}
+
+function renderTable() {
+  const tbody = document.getElementById('bodyRows');
+  const visibleCount = state.filtered.length;
+  document.getElementById('visibleCount').textContent = visibleCount;
+  document.getElementById('emptyState').style.display = visibleCount === 0 ? 'block' : 'none';
+
+  // For performance, only render up to 1000 rows at a time
+  const MAX_RENDER = 1000;
+  const rowsToRender = state.filtered.slice(0, MAX_RENDER);
+  const truncated = visibleCount > MAX_RENDER;
+
+  const html = rowsToRender.map(r => {
+    const cells = ALL_COLUMNS.filter(c => state.visibleColumns.has(c)).map(col => {
+      let v = r[col];
+      if (v == null) v = '';
+      let cls = '';
+      if (NUMERIC_FIELDS.has(col)) {
+        cls = 'numeric';
+        if (v !== '' && !isNaN(parseFloat(v))) {
+          v = '$' + parseFloat(v).toFixed(2);
+        }
+      } else if (CODE_FIELDS.has(col)) {
+        cls = 'code';
+      }
+      return `<td class="${cls}" title="${escapeHtml(String(v))}">${escapeHtml(String(v))}</td>`;
+    }).join('');
+    return `<tr data-row="${r._row}">${cells}</tr>`;
+  }).join('');
+  tbody.innerHTML = html;
+
+  if (truncated) {
+    const trunc = document.createElement('tr');
+    trunc.innerHTML = `<td colspan="${state.visibleColumns.size}" style="text-align:center;padding:14px;color:var(--gray-500);font-style:italic;">Showing first ${MAX_RENDER} of ${visibleCount} matching rows. Narrow your filter to see more.</td>`;
+    tbody.appendChild(trunc);
+  }
+
+  // Click handlers
+  tbody.querySelectorAll('tr[data-row]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const rowIdx = parseInt(tr.dataset.row);
+      const row = state.rows.find(r => r._row === rowIdx);
+      if (row) openEditPanel(row);
+    });
+  });
+}
+
+// ============================================================
+// EDIT PANEL
+// ============================================================
+function openEditPanel(row, isAdd = false) {
+  state.editingRow = isAdd ? null : { ...row };
+  state.isAddingRow = isAdd;
+  const formData = isAdd ? {} : { ...row };
+
+  document.getElementById('editPanelTitle').textContent = isAdd ? 'Add New Row' : `Edit Row ${row._row}`;
+  document.getElementById('deleteBtn').style.display = isAdd ? 'none' : 'inline-block';
+
+  const body = document.getElementById('editPanelBody');
+  body.innerHTML = '';
+
+  // Group fields logically
+  const groups = [
+    { title: 'Source', fields: ['SUPPLIER','ST','Product ID','Branch ID','Price Sheet'] },
+    { title: 'Item', fields: ['Item','Item #','Item Color'] },
+    { title: 'Product', fields: ['Type','Brand','BrandLine','Description','Elite Product Name','Measurement'] },
+    { title: 'Color & Pricing', fields: ['Color','Price UOM','Current Price'] },
+    { title: 'Derived Codes (auto)', fields: ['Type Code','Description Code','Color Code','Blaze Code'] }
+  ];
+
+  groups.forEach(g => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'field-group';
+    groupDiv.innerHTML = `<div class="field-group-title">${g.title}</div>`;
+    g.fields.forEach(f => groupDiv.appendChild(buildField(f, formData)));
+    body.appendChild(groupDiv);
+  });
+
+  document.getElementById('editPanel').classList.add('open');
+}
+
+function buildField(name, formData) {
+  const div = document.createElement('div');
+  div.className = 'field';
+
+  const label = document.createElement('label');
+  label.textContent = name;
+  if (DERIVED_FIELDS.has(name)) {
+    label.textContent += ' (auto)';
+  }
+  div.appendChild(label);
+
+  let input;
+  const value = formData[name] == null ? '' : String(formData[name]);
+
+  // Use select for fields with known lookup values
+  if (name === 'Type') {
+    input = document.createElement('select');
+    input.innerHTML = '<option value="">— select —</option>' +
+      state.typeCodes.map(t => `<option value="${escapeHtml(t.Type)}" ${value === t.Type ? 'selected' : ''}>${escapeHtml(t.Type)}</option>`).join('');
+  } else if (name === 'Color') {
+    input = document.createElement('select');
+    input.innerHTML = '<option value="">— none —</option>' +
+      state.colorChart.map(c => `<option value="${escapeHtml(c['Color Name'])}" ${value === c['Color Name'] ? 'selected' : ''}>${escapeHtml(c['Color Name'])} (${escapeHtml(c['Color Code'])})</option>`).join('');
+  } else if (name === 'Elite Product Name') {
+    input = document.createElement('select');
+    const opts = ['<option value="">— select —</option>'];
+    state.skuChart.forEach(s => {
+      opts.push(`<option value="${escapeHtml(s['Elite Product Name'])}" ${value === s['Elite Product Name'] ? 'selected' : ''}>${escapeHtml(s['Elite Product Name'])}</option>`);
+    });
+    input.innerHTML = opts.join('');
+  } else if (name === 'SUPPLIER') {
+    input = document.createElement('select');
+    const sups = ['ABC','SRS','RBS','RM'];
+    input.innerHTML = '<option value="">— select —</option>' +
+      sups.map(s => `<option value="${s}" ${value === s ? 'selected' : ''}>${s}</option>`).join('');
+  } else if (name === 'ST') {
+    input = document.createElement('select');
+    const states = Array.from(new Set(state.rows.map(r => r.ST).filter(Boolean))).sort();
+    input.innerHTML = '<option value="">— select —</option>' +
+      states.map(s => `<option value="${s}" ${value === s ? 'selected' : ''}>${s}</option>`).join('');
+  } else if (name === 'Price UOM') {
+    input = document.createElement('select');
+    const uoms = ['SQ','BD','RL','EA','PC','BOX','PNL','LF','BG','GAL','CT','TUBE','BX'];
+    input.innerHTML = '<option value="">— select —</option>' +
+      uoms.map(u => `<option value="${u}" ${value === u ? 'selected' : ''}>${u}</option>`).join('');
+  } else if (name === 'Current Price') {
+    input = document.createElement('input');
+    input.type = 'number';
+    input.step = '0.01';
+    input.value = value;
+  } else {
+    input = document.createElement('input');
+    input.type = 'text';
+    input.value = value;
+  }
+
+  input.id = `field_${name.replace(/\W+/g, '_')}`;
+  input.dataset.field = name;
+  if (DERIVED_FIELDS.has(name)) input.classList.add('derived');
+
+  // For Type/Color/EPN/Item — trigger live derivation preview
+  if (['Type','Color','Elite Product Name','Item','Brand'].includes(name)) {
+    input.addEventListener('change', () => recomputeDerived());
+    input.addEventListener('input', () => recomputeDerived());
+  }
+  // For Item Color: also recompute Item# and Blaze when manually changed
+  if (name === 'Item Color') {
+    input.addEventListener('input', () => recomputeDerived());
+  }
+
+  div.appendChild(input);
+  return div;
+}
+
+function recomputeDerived() {
+  const fd = collectFormData();
+
+  // Type Code from Type
+  if (fd['Type']) {
+    const tc = state.typeCodes.find(t => t.Type === fd['Type']);
+    if (tc) setFieldValue('Type Code', tc.Code);
+  }
+  // Description Code from EPN
+  if (fd['Elite Product Name']) {
+    const sku = state.skuChart.find(s => s['Elite Product Name'] === fd['Elite Product Name']);
+    if (sku) setFieldValue('Description Code', sku.Slug);
+  }
+  // Color Code from Color
+  if (fd['Color']) {
+    const cc = state.colorChart.find(c => c['Color Name'] === fd['Color']);
+    if (cc) setFieldValue('Color Code', cc['Color Code']);
+  } else {
+    setFieldValue('Color Code', '');
+  }
+  // Item # & Item Color from Item
+  if (fd['Item']) {
+    const item = String(fd['Item']).trim();
+    let itemColor = fd['Item Color'] || '';
+    if (!itemColor) {
+      const m3 = item.match(/(\d{3})$/);
+      if (m3) itemColor = m3[1];
+      else if (item.length >= 4 && /[0-9]/.test(item[item.length-4])) {
+        const last3 = item.slice(-3).toUpperCase();
+        if (/^[A-Z]{3}$/.test(last3) || /^[A-Z]{2}\d$/.test(last3)) itemColor = last3;
+        else itemColor = item.slice(-2).toUpperCase();
+      } else {
+        itemColor = item.slice(-2).toUpperCase();
+      }
+      setFieldValue('Item Color', itemColor);
+    }
+    if (itemColor && item.toUpperCase().endsWith(itemColor.toUpperCase())) {
+      setFieldValue('Item #', item.slice(0, item.length - itemColor.length));
+    } else {
+      setFieldValue('Item #', item);
+    }
+  }
+  // Blaze Code
+  const tc = (document.querySelector('[data-field="Type Code"]')?.value || '').trim();
+  const br = (document.querySelector('[data-field="Brand"]')?.value || '').trim();
+  const dc = (document.querySelector('[data-field="Description Code"]')?.value || '').trim();
+  const cc = (document.querySelector('[data-field="Color Code"]')?.value || '').trim();
+  setFieldValue('Blaze Code', buildBlazeCode(tc, br, dc, cc));
+}
+
+function buildBlazeCode(tc, br, dc, cc) {
+  let slugLen;
+  if (br.length === 2) slugLen = 13;
+  else if (br.length === 3) slugLen = 12;
+  else slugLen = Math.max(0, 15 - br.length);
+  return `${tc}-${br}-${padOrTrunc(dc, slugLen, 'X')}-${padOrTrunc(cc, 6, 'X')}`;
+}
+
+function padOrTrunc(s, n, p) {
+  s = String(s || '');
+  return s.length >= n ? s.slice(0, n) : s + p.repeat(n - s.length);
+}
+
+function setFieldValue(name, v) {
+  const el = document.querySelector(`[data-field="${name}"]`);
+  if (el) el.value = v;
+}
+
+function collectFormData() {
+  const fd = {};
+  document.querySelectorAll('[data-field]').forEach(el => {
+    fd[el.dataset.field] = el.value;
+  });
+  return fd;
+}
+
+function closeEditPanel() {
+  document.getElementById('editPanel').classList.remove('open');
+  state.editingRow = null;
+  state.isAddingRow = false;
+}
+
+// ============================================================
+// SAVE / ADD / DELETE
+// ============================================================
+async function saveRow() {
+  const fd = collectFormData();
+  showLoading('Saving…');
+  try {
+    let result;
+    if (state.isAddingRow) {
+      result = await apiCall('addRow', { values: fd });
+      // Add to local state
+      const newRow = { _row: result.rowIndex, ...result.values };
+      state.rows.push(newRow);
+      toast('Row added', 'success');
+    } else {
+      const rowIndex = state.editingRow._row;
+      result = await apiCall('updateRow', { rowIndex, values: fd });
+      // Update local state
+      const idx = state.rows.findIndex(r => r._row === rowIndex);
+      if (idx >= 0) state.rows[idx] = { ...state.rows[idx], ...result.values, _row: rowIndex };
+      toast('Row saved', 'success');
+    }
+    // Refresh lookup cache (small only)
+    safeCache({
+      typeCodes: state.typeCodes,
+      skuChart: state.skuChart,
+      colorChart: state.colorChart,
+      serverTime: new Date().toISOString()
+    });
+    document.getElementById('totalCount').textContent = state.rows.length;
+    closeEditPanel();
+    applyFiltersAndRender();
+  } catch (err) {
+    toast(`Save failed: ${err.message}`, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function deleteRow() {
+  if (state.isAddingRow || !state.editingRow) return;
+  const rowIdx = state.editingRow._row;
+  showConfirm(
+    'Delete Row',
+    `Delete row ${rowIdx}? This cannot be undone.`,
+    async () => {
+      showLoading('Deleting…');
+      try {
+        await apiCall('deleteRow', { rowIndex: rowIdx });
+        state.rows = state.rows.filter(r => r._row !== rowIdx);
+        // Shift _row indices for rows below
+        state.rows.forEach(r => { if (r._row > rowIdx) r._row -= 1; });
+        safeCache({
+          typeCodes: state.typeCodes,
+          skuChart: state.skuChart,
+          colorChart: state.colorChart,
+          serverTime: new Date().toISOString()
+        });
+        document.getElementById('totalCount').textContent = state.rows.length;
+        toast('Row deleted', 'success');
+        closeEditPanel();
+        applyFiltersAndRender();
+      } catch (err) {
+        toast(`Delete failed: ${err.message}`, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+  );
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportCSV() {
+  const cols = ALL_COLUMNS.filter(c => state.visibleColumns.has(c));
+  const lines = [cols.map(escapeCsv).join(',')];
+  state.filtered.forEach(r => {
+    lines.push(cols.map(c => escapeCsv(r[c] == null ? '' : String(r[c]))).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pricing_export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${state.filtered.length} rows`, 'success');
+}
+
+function escapeCsv(s) {
+  s = String(s);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+// ============================================================
+// COLUMN PICKER
+// ============================================================
+function toggleColPicker(e) {
+  let pop = document.querySelector('.col-picker');
+  if (pop) { pop.remove(); return; }
+  pop = document.createElement('div');
+  pop.className = 'col-picker';
+  pop.innerHTML = ALL_COLUMNS.map(col =>
+    `<label><input type="checkbox" data-col="${escapeHtml(col)}" ${state.visibleColumns.has(col) ? 'checked' : ''}> ${escapeHtml(col)}</label>`
+  ).join('');
+  const rect = e.target.getBoundingClientRect();
+  pop.style.top = (rect.bottom + 4) + 'px';
+  pop.style.left = rect.left + 'px';
+  document.body.appendChild(pop);
+  pop.querySelectorAll('input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const col = cb.dataset.col;
+      if (cb.checked) state.visibleColumns.add(col);
+      else state.visibleColumns.delete(col);
+      buildHeaderRow();
+      renderTable();
+    });
+  });
+  setTimeout(() => {
+    document.addEventListener('click', closeColPicker, { once: true });
+  }, 0);
+}
+function closeColPicker(e) {
+  const pop = document.querySelector('.col-picker');
+  if (pop && !pop.contains(e.target) && e.target.id !== 'colPickerBtn') pop.remove();
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function setConnectionStatus(s) {
+  const dot = document.getElementById('connStatus');
+  const txt = document.getElementById('connText');
+  dot.className = 'status-dot';
+  if (s === 'ok')        { dot.classList.add('ok');    txt.textContent = 'Connected'; }
+  else if (s === 'warn') { dot.classList.add('warn');  txt.textContent = 'Reconnecting'; }
+  else if (s === 'error'){ dot.classList.add('error'); txt.textContent = 'Connection failed'; }
+  else                   {                              txt.textContent = 'Connecting…'; }
+}
+function setLastSync(s) {
+  document.getElementById('lastSync').textContent = s;
+}
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'Loading…';
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('show');
+}
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = msg;
+  const m = document.getElementById('confirmModal');
+  m.classList.add('open');
+  const okBtn = document.getElementById('confirmOkBtn');
+  const cancelBtn = document.getElementById('confirmCancelBtn');
+  const cleanup = () => {
+    m.classList.remove('open');
+    okBtn.replaceWith(okBtn.cloneNode(true));
+    cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+  };
+  document.getElementById('confirmOkBtn').addEventListener('click', () => {
+    cleanup();
+    onOk();
+  });
+  document.getElementById('confirmCancelBtn').addEventListener('click', cleanup);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// EVENT WIRE-UP
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Search
+  let searchTimer;
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => applyFiltersAndRender(), 200);
+  });
+
+  // Filter chip dropdown toggle
+  document.querySelectorAll('.filter-chip[data-filter]').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('.dropdown')) return;
+      const wasOpen = chip.classList.contains('open');
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('open'));
+      if (!wasOpen) chip.classList.add('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.filter-chip')) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('open'));
+    }
+  });
+
+  // Buttons
+  document.getElementById('settingsBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('settingsMenu').classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('settingsMenu');
+    if (menu && menu.classList.contains('open') && !e.target.closest('.settings-wrap')) {
+      menu.classList.remove('open');
+    }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', () => loadBootstrap(false));
+  document.getElementById('addRowBtn').addEventListener('click', () => openEditPanel({}, true));
+  document.getElementById('exportBtn').addEventListener('click', exportCSV);
+  document.getElementById('colPickerBtn').addEventListener('click', toggleColPicker);
+  document.getElementById('editPanelClose').addEventListener('click', closeEditPanel);
+  document.getElementById('cancelBtn').addEventListener('click', closeEditPanel);
+  document.getElementById('saveBtn').addEventListener('click', saveRow);
+  document.getElementById('deleteBtn').addEventListener('click', deleteRow);
+
+  // ESC closes edit panel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('editPanel').classList.contains('open')) closeEditPanel();
+    }
+  });
+
+  loadBootstrap(true);
+
+  // Periodic background refresh
+  setInterval(() => {
+    if (!document.getElementById('editPanel').classList.contains('open')) {
+      apiCall('bootstrap').then(data => {
+        applyBootstrap(data);
+        safeCache({
+          typeCodes: data.typeCodes,
+          skuChart: data.skuChart,
+          colorChart: data.colorChart,
+          serverTime: data.serverTime
+        });
+        setLastSync(`Synced ${new Date().toLocaleTimeString()}`);
+        setConnectionStatus('ok');
+      }).catch(err => {
+        console.warn('Background sync failed', err);
+        setConnectionStatus('warn');
+      });
+    }
+  }, REFRESH_INTERVAL_MS);
+});
+</script>
+
+</body>
+</html>
