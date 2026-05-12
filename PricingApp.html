@@ -83,7 +83,7 @@
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   }
   .search-box {
-    flex: 1; min-width: 250px;
+    flex: 0 0 280px;
     position: relative;
   }
   .search-box input {
@@ -206,7 +206,15 @@
     user-select: none;
   }
   table.data thead th:hover { background: var(--blue); }
-  table.data thead th .sort-indicator { margin-left: 4px; opacity: 0.6; font-size: 10px; }
+  table.data thead th .sort-indicator {
+    margin-left: 6px;
+    opacity: 1;
+    color: var(--blue-light);
+    font-size: 12px;
+    font-weight: bold;
+  }
+  table.data thead th { user-select: none; }
+  table.data thead th:hover .sort-indicator { color: #fff; }
   table.data tbody td {
     padding: 6px 10px;
     border-bottom: 1px solid var(--gray-100);
@@ -618,6 +626,7 @@
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="Search across all columns…">
   </div>
+  <button class="action secondary" id="clearAllBtn" title="Clear search + all filters">✕ Clear</button>
   <div class="filter-chip" data-filter="ST">State <span class="count"></span></div>
   <div class="filter-chip" data-filter="SUPPLIER">Supplier <span class="count"></span></div>
   <div class="filter-chip" data-filter="Type">Type <span class="count"></span></div>
@@ -1407,6 +1416,24 @@ document.addEventListener('DOMContentLoaded', () => {
     state.search = e.target.value;
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => applyFiltersAndRender(), 200);
+  });
+
+  // Clear all: search + filters + sort
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
+    // Clear search box
+    state.search = '';
+    document.getElementById('searchInput').value = '';
+    // Clear all filter chips
+    for (const k of Object.keys(state.filters)) {
+      if (state.filters[k]) state.filters[k].clear();
+    }
+    document.querySelectorAll('.filter-chip .dropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('open'));
+    // Clear sort
+    state.sortBy = null;
+    state.sortDir = 'asc';
+    applyFiltersAndRender();
+    buildHeaderRow();
   });
 
   // Filter chip dropdown toggle
