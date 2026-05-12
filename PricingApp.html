@@ -624,7 +624,7 @@
 
 <div class="toolbar">
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search across all columns…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <input type="search" id="searchInput" name="ecs_search_q" placeholder="Search across all columns…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true">
   </div>
   <button class="action secondary" id="clearAllBtn" title="Clear search + all filters">✕ Clear</button>
   <div class="filter-chip" data-filter="ST">State <span class="count"></span></div>
@@ -1409,10 +1409,25 @@ function escapeHtml(s) {
 // ============================================================
 // EVENT WIRE-UP
 // ============================================================
+// Aggressively prevent Chrome from restoring previous search input
+function _clearSearchInput() {
+  const el = document.getElementById('searchInput');
+  if (el) {
+    el.value = '';
+    el.defaultValue = '';
+  }
+  if (typeof state !== 'undefined') state.search = '';
+}
+// Clear at multiple stages — Chrome restores form values at different times
+window.addEventListener('pageshow', _clearSearchInput);      // Fires on every page show including bfcache restore
+window.addEventListener('load', _clearSearchInput);          // After all resources loaded
+setTimeout(_clearSearchInput, 0);                            // After current call stack
+setTimeout(_clearSearchInput, 100);                          // After Chrome's typical restore
+setTimeout(_clearSearchInput, 500);                          // Belt and suspenders
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Force-clear search input on load (some browsers restore previous value)
-  const _si = document.getElementById('searchInput');
-  if (_si) _si.value = '';
+  // First clear of many
+  _clearSearchInput();
   // Search
   let searchTimer;
   document.getElementById('searchInput').addEventListener('input', (e) => {
