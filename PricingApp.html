@@ -467,6 +467,230 @@
     display: flex; flex-direction: column;
   }
 
+
+  /* ============ APP TAB BAR ============ */
+  .app-tabs {
+    display: flex;
+    background: #fff;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 16px;
+    gap: 4px;
+  }
+  .app-tab {
+    background: transparent;
+    border: none;
+    color: var(--gray-700);
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    font-family: inherit;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .app-tab:hover { color: var(--blue); background: var(--gray-50); }
+  .app-tab.active {
+    color: var(--navy);
+    border-bottom-color: var(--blue);
+    background: var(--blue-bg);
+  }
+  .app-view { display: none; }
+  .app-view.active { display: block; }
+
+  /* ============ LOOKUP VIEW ============ */
+  .lookup-wrap {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 20px;
+  }
+  .lookup-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .lookup-header h2 {
+    color: var(--navy);
+    margin: 0 0 6px;
+    font-size: 22px;
+  }
+  .lookup-header p {
+    color: var(--gray-700);
+    margin: 0;
+    font-size: 13px;
+  }
+  .lookup-reset {
+    background: none;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 12px;
+    font-family: inherit;
+  }
+  .lookup-reset:hover { background: var(--gray-100); }
+  .lookup-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+  }
+  .filter-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .filter-step:last-child { border-bottom: none; }
+  .filter-step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    color: var(--gray-500);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .filter-step.completed .filter-step-num,
+  .filter-step.active .filter-step-num {
+    background: var(--blue);
+    color: #fff;
+  }
+  .filter-step.completed .filter-step-num::before {
+    content: "✓";
+  }
+  .filter-step.completed .filter-step-num span { display: none; }
+  .filter-step-label {
+    width: 130px;
+    font-weight: bold;
+    color: var(--gray-900);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .filter-step-label .step-hint {
+    display: block;
+    font-weight: normal;
+    color: var(--gray-500);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .filter-step select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--gray-900);
+  }
+  .filter-step select:disabled {
+    background: var(--gray-50);
+    color: var(--gray-500);
+    cursor: not-allowed;
+  }
+  .filter-step select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(31,95,173,0.15);
+  }
+  .filter-step .option-count {
+    color: var(--gray-500);
+    font-size: 11px;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  .filter-step.skipped {
+    opacity: 0.5;
+  }
+  .filter-step.skipped select {
+    background: var(--gray-100);
+    color: var(--gray-500);
+  }
+  .filter-step.skipped .filter-step-num {
+    background: var(--gray-200);
+    color: var(--gray-500);
+  }
+  .filter-step.skipped .filter-step-num::before { content: "—"; }
+  .filter-step.skipped .filter-step-num span { display: none; }
+
+  .lookup-results {
+    margin-top: 24px;
+  }
+  .lookup-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .lookup-results-header h3 {
+    margin: 0;
+    color: var(--navy);
+    font-size: 16px;
+  }
+  .lookup-results-count {
+    color: var(--gray-500);
+    font-size: 12px;
+  }
+  .lookup-results-empty {
+    background: var(--gray-50);
+    border: 1px dashed var(--gray-300);
+    padding: 28px;
+    text-align: center;
+    border-radius: 6px;
+    color: var(--gray-500);
+    font-size: 13px;
+  }
+  table.lookup-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  table.lookup-table thead th {
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  table.lookup-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  table.lookup-table tbody tr:nth-child(even) td { background: var(--gray-50); }
+  table.lookup-table .blaze-cell {
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    color: var(--navy);
+    font-weight: bold;
+  }
+  table.lookup-table .price-cell {
+    text-align: right;
+    font-family: Consolas, monospace;
+  }
+  table.lookup-table .copy-btn {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+  }
+  table.lookup-table .copy-btn:hover { background: var(--blue-light); }
+  table.lookup-table .copy-btn.copied { background: var(--green); }
+
 </style>
 </head>
 <body>
@@ -515,6 +739,12 @@
   </div>
 </header>
 
+<nav class="app-tabs">
+  <button class="app-tab active" data-view="manager">📊 Data Manager</button>
+  <button class="app-tab" data-view="lookup">🔎 Blaze Code Lookup</button>
+</nav>
+
+<div class="app-view active" id="view-manager">
 <div class="toolbar">
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="Search across all columns…">
@@ -545,6 +775,53 @@
     <p>Try adjusting your filters or search query.</p>
   </div>
 </div>
+</div><!-- /view-manager -->
+
+<div class="app-view" id="view-lookup">
+  <div class="lookup-wrap">
+    <div class="lookup-header">
+      <h2>Blaze Code Lookup</h2>
+      <p>Filter step-by-step to find a specific product's Blaze Code. Each dropdown only shows options that lead to real rows. <button class="lookup-reset" id="lookupResetBtn">Reset</button></p>
+    </div>
+
+    <div class="lookup-card">
+      <div class="filter-step" id="step-st" data-step="ST">
+        <div class="filter-step-num"><span>1</span></div>
+        <div class="filter-step-label">State<span class="step-hint">ST</span></div>
+        <select id="lookup-st"><option value="">— pick a state —</option></select>
+      </div>
+      <div class="filter-step" id="step-supplier" data-step="SUPPLIER">
+        <div class="filter-step-num"><span>2</span></div>
+        <div class="filter-step-label">Supplier</div>
+        <select id="lookup-supplier" disabled><option value="">— pick state first —</option></select>
+      </div>
+      <div class="filter-step" id="step-type" data-step="Type">
+        <div class="filter-step-num"><span>3</span></div>
+        <div class="filter-step-label">Type</div>
+        <select id="lookup-type" disabled><option value="">— pick supplier first —</option></select>
+      </div>
+      <div class="filter-step" id="step-brand" data-step="Brand">
+        <div class="filter-step-num"><span>4</span></div>
+        <div class="filter-step-label">Brand</div>
+        <select id="lookup-brand" disabled><option value="">— pick type first —</option></select>
+      </div>
+      <div class="filter-step" id="step-epn" data-step="Elite Product Name">
+        <div class="filter-step-num"><span>5</span></div>
+        <div class="filter-step-label">Elite Product Name<span class="step-hint">EPN</span></div>
+        <select id="lookup-epn" disabled><option value="">— pick brand first —</option></select>
+      </div>
+      <div class="filter-step" id="step-color" data-step="Color">
+        <div class="filter-step-num"><span>6</span></div>
+        <div class="filter-step-label">Color</div>
+        <select id="lookup-color" disabled><option value="">— pick product first —</option></select>
+      </div>
+    </div>
+
+    <div class="lookup-results" id="lookupResults">
+      <div class="lookup-results-empty">Complete the filters above to see matching Blaze Code(s).</div>
+    </div>
+  </div>
+</div><!-- /view-lookup -->
 
 <!-- Edit Panel -->
 <div class="edit-panel" id="editPanel">
@@ -700,6 +977,10 @@ function applyBootstrap(data) {
   applyFiltersAndRender();
   buildFilterChips();
   buildHeaderRow();
+  // If the lookup tab is active, refresh State dropdown
+  if (typeof populateLookupState === 'function' && document.getElementById('view-lookup') && document.getElementById('view-lookup').classList.contains('active')) {
+    populateLookupState();
+  }
 }
 
 function compareRowsDefault(a, b) {
@@ -1332,6 +1613,262 @@ document.addEventListener('DOMContentLoaded', () => {
       if (document.getElementById('editPanel').classList.contains('open')) closeEditPanel();
     }
   });
+
+  // ============================================================
+  // BLAZE CODE LOOKUP (cascading filter view)
+  // ============================================================
+  // Tab switching
+  document.querySelectorAll('.app-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const view = tab.dataset.view;
+      document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('view-' + view).classList.add('active');
+      if (view === 'lookup') populateLookupState();
+    });
+  });
+
+  const LOOKUP_FIELDS = ['ST', 'SUPPLIER', 'Type', 'Brand', 'Elite Product Name', 'Color'];
+  const LOOKUP_DOM_IDS = {
+    'ST':                 'lookup-st',
+    'SUPPLIER':           'lookup-supplier',
+    'Type':               'lookup-type',
+    'Brand':              'lookup-brand',
+    'Elite Product Name': 'lookup-epn',
+    'Color':              'lookup-color'
+  };
+  const LOOKUP_STEP_IDS = {
+    'ST': 'step-st',
+    'SUPPLIER': 'step-supplier',
+    'Type': 'step-type',
+    'Brand': 'step-brand',
+    'Elite Product Name': 'step-epn',
+    'Color': 'step-color'
+  };
+  const lookupState = {}; // field -> selected value
+
+  function getFilteredRowsForLookup(uptoExclusive) {
+    // Apply all selections strictly before the given field index
+    return state.rows.filter(r => {
+      for (let i = 0; i < uptoExclusive; i++) {
+        const f = LOOKUP_FIELDS[i];
+        const want = lookupState[f];
+        if (want === undefined || want === null) continue;
+        if (f === 'Color' && want === '__NONE__') {
+          // user picked the "(no color)" sentinel
+          const v = r.Color;
+          if (v != null && String(v).trim() !== '') return false;
+        } else {
+          const v = r[f];
+          if (v == null) return false;
+          if (String(v) !== String(want)) return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  function populateLookupDropdown(fieldIdx) {
+    const field = LOOKUP_FIELDS[fieldIdx];
+    const sel = document.getElementById(LOOKUP_DOM_IDS[field]);
+    const stepEl = document.getElementById(LOOKUP_STEP_IDS[field]);
+
+    // Get rows matching all PRIOR selections
+    const candidateRows = getFilteredRowsForLookup(fieldIdx);
+
+    // Special handling for Color: skip if no row in candidates has a non-empty color
+    if (field === 'Color') {
+      const colorsPresent = candidateRows.some(r => r.Color != null && String(r.Color).trim() !== '');
+      if (!colorsPresent) {
+        stepEl.classList.add('skipped');
+        stepEl.classList.remove('active', 'completed');
+        sel.disabled = true;
+        sel.innerHTML = '<option value="">— no color for this product —</option>';
+        lookupState['Color'] = '__SKIP__';
+        renderLookupResults();
+        return;
+      } else {
+        stepEl.classList.remove('skipped');
+      }
+    }
+
+    // Collect unique non-empty values for this field
+    const valueCounts = new Map();
+    for (const r of candidateRows) {
+      let v = r[field];
+      if (v == null) {
+        // For Color only, allow "(no color)" sentinel
+        if (field === 'Color') v = '__NONE__';
+        else continue;
+      } else {
+        v = String(v).trim();
+        if (!v) continue;
+      }
+      valueCounts.set(v, (valueCounts.get(v) || 0) + 1);
+    }
+
+    const values = Array.from(valueCounts.keys()).sort((a, b) => {
+      if (a === '__NONE__') return 1;
+      if (b === '__NONE__') return -1;
+      return String(a).localeCompare(String(b));
+    });
+
+    sel.innerHTML = '<option value="">— pick a ' + field.toLowerCase() + ' —</option>' +
+      values.map(v => {
+        const label = (v === '__NONE__') ? '(no color)' : v;
+        return '<option value="' + escapeHtml(String(v)) + '">' + escapeHtml(label) + '</option>';
+      }).join('');
+
+    sel.disabled = false;
+    stepEl.classList.add('active');
+    stepEl.classList.remove('completed', 'skipped');
+
+    // Restore previous selection if still valid
+    const prev = lookupState[field];
+    if (prev !== undefined && prev !== null && prev !== '__SKIP__' && valueCounts.has(prev)) {
+      sel.value = prev;
+      stepEl.classList.add('completed');
+      stepEl.classList.remove('active');
+    } else {
+      // Reset this selection since prior changed
+      delete lookupState[field];
+      sel.value = '';
+    }
+  }
+
+  function resetLookupFromField(fromIdx) {
+    // Clear selections from this field onward
+    for (let i = fromIdx; i < LOOKUP_FIELDS.length; i++) {
+      const f = LOOKUP_FIELDS[i];
+      delete lookupState[f];
+      const stepEl = document.getElementById(LOOKUP_STEP_IDS[f]);
+      const sel = document.getElementById(LOOKUP_DOM_IDS[f]);
+      stepEl.classList.remove('active', 'completed', 'skipped');
+      if (i > fromIdx) {
+        sel.disabled = true;
+        sel.innerHTML = '<option value="">— pick previous step first —</option>';
+      }
+    }
+  }
+
+  function populateLookupState() {
+    // Always populate State first (entry point)
+    if (state.rows.length === 0) return; // bootstrap not done yet
+    populateLookupDropdown(0);
+  }
+
+  function wireLookupDropdowns() {
+    LOOKUP_FIELDS.forEach((field, idx) => {
+      const sel = document.getElementById(LOOKUP_DOM_IDS[field]);
+      const stepEl = document.getElementById(LOOKUP_STEP_IDS[field]);
+      sel.addEventListener('change', () => {
+        const val = sel.value;
+        if (val === '') {
+          delete lookupState[field];
+          stepEl.classList.remove('completed', 'active');
+          resetLookupFromField(idx + 1);
+          renderLookupResults();
+          return;
+        }
+        lookupState[field] = val;
+        stepEl.classList.add('completed');
+        stepEl.classList.remove('active');
+        resetLookupFromField(idx + 1);
+        // Populate next dropdown if exists
+        if (idx + 1 < LOOKUP_FIELDS.length) {
+          populateLookupDropdown(idx + 1);
+        }
+        renderLookupResults();
+      });
+    });
+
+    document.getElementById('lookupResetBtn').addEventListener('click', () => {
+      LOOKUP_FIELDS.forEach(f => delete lookupState[f]);
+      LOOKUP_FIELDS.forEach((f, i) => {
+        const stepEl = document.getElementById(LOOKUP_STEP_IDS[f]);
+        const sel = document.getElementById(LOOKUP_DOM_IDS[f]);
+        stepEl.classList.remove('active', 'completed', 'skipped');
+        if (i === 0) {
+          sel.disabled = false;
+        } else {
+          sel.disabled = true;
+          sel.innerHTML = '<option value="">— pick previous step first —</option>';
+        }
+        sel.value = '';
+      });
+      populateLookupDropdown(0);
+      renderLookupResults();
+    });
+  }
+
+  function renderLookupResults() {
+    const wrap = document.getElementById('lookupResults');
+    // Need at minimum State + Supplier + Type + Brand + EPN selected to render results
+    const requiredFilled = ['ST','SUPPLIER','Type','Brand','Elite Product Name'].every(f => {
+      const v = lookupState[f];
+      return v !== undefined && v !== null && v !== '' && v !== '__SKIP__';
+    });
+    if (!requiredFilled) {
+      wrap.innerHTML = '<div class="lookup-results-empty">Complete the filters above to see matching Blaze Code(s).</div>';
+      return;
+    }
+    // Match using all filled filters (Color may be __SKIP__ if not applicable)
+    const matches = getFilteredRowsForLookup(LOOKUP_FIELDS.length);
+    if (matches.length === 0) {
+      wrap.innerHTML = '<div class="lookup-results-empty">No matching rows found.</div>';
+      return;
+    }
+
+    let html = '<div class="lookup-results-header">' +
+      '<h3>Matching Row' + (matches.length > 1 ? 's' : '') + '</h3>' +
+      '<span class="lookup-results-count">' + matches.length + ' result' + (matches.length > 1 ? 's' : '') + '</span>' +
+      '</div>';
+    html += '<table class="lookup-table"><thead><tr>' +
+      '<th>Blaze Code</th><th>Item</th><th>Description</th><th>Color</th><th>UOM</th><th>Price</th><th>Price Sheet</th><th></th>' +
+      '</tr></thead><tbody>';
+    for (const r of matches) {
+      const blaze = r['Blaze Code'] == null ? '' : String(r['Blaze Code']);
+      const item = r['Item'] == null ? '' : String(r['Item']);
+      const desc = r['Description'] == null ? '' : String(r['Description']);
+      const color = r['Color'] == null ? '' : String(r['Color']);
+      const uom = r['Price UOM'] == null ? '' : String(r['Price UOM']);
+      const price = r['Current Price'];
+      const priceStr = (price == null || isNaN(parseFloat(price))) ? '' : '$' + parseFloat(price).toFixed(2);
+      const ps = r['Price Sheet'] == null ? '' : String(r['Price Sheet']);
+      html += '<tr>' +
+        '<td class="blaze-cell">' + escapeHtml(blaze) + '</td>' +
+        '<td>' + escapeHtml(item) + '</td>' +
+        '<td>' + escapeHtml(desc) + '</td>' +
+        '<td>' + escapeHtml(color) + '</td>' +
+        '<td>' + escapeHtml(uom) + '</td>' +
+        '<td class="price-cell">' + escapeHtml(priceStr) + '</td>' +
+        '<td>' + escapeHtml(ps) + '</td>' +
+        '<td><button class="copy-btn" data-blaze="' + escapeHtml(blaze) + '">Copy</button></td>' +
+        '</tr>';
+    }
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    // Wire copy buttons
+    wrap.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.dataset.blaze;
+        navigator.clipboard.writeText(code).then(() => {
+          btn.classList.add('copied');
+          btn.textContent = 'Copied!';
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.textContent = 'Copy';
+          }, 1500);
+        }).catch(() => {
+          toast('Copy failed — select and copy manually', 'error');
+        });
+      });
+    });
+  }
+
+  wireLookupDropdowns();
 
   loadBootstrap(true);
 
