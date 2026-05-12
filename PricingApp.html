@@ -690,6 +690,264 @@
   table.lookup-table .copy-btn:hover { background: var(--blue-light); }
   table.lookup-table .copy-btn.copied { background: var(--green); }
 
+
+  /* ============ PRICE CALCULATOR ============ */
+  .calc-wrap {
+    max-width: 1400px;
+    margin: 24px auto;
+    padding: 0 20px 60px;
+  }
+  .calc-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .calc-header h2 {
+    color: var(--navy);
+    margin: 0 0 6px;
+    font-size: 22px;
+  }
+  .calc-header p {
+    color: var(--gray-700);
+    margin: 0;
+    font-size: 13px;
+  }
+  .calc-globals {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 16px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .calc-global-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+  }
+  .calc-global-field label {
+    font-weight: bold;
+    color: var(--gray-700);
+    font-size: 12px;
+  }
+  .calc-global-field select {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--gray-900);
+  }
+  .calc-global-field select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(31,95,173,0.15);
+  }
+  .calc-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .calc-actions button {
+    padding: 8px 14px;
+    border: 1px solid var(--gray-300);
+    background: #fff;
+    color: var(--gray-700);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .calc-actions button:hover { background: var(--gray-100); }
+  .calc-actions .primary {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+  }
+  .calc-actions .primary:hover { background: var(--blue-light); }
+
+  /* Calculator table */
+  .calc-table-wrap {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  table.calc-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+  }
+  table.calc-table thead th {
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  table.calc-table tbody td {
+    padding: 8px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+  }
+  table.calc-table tbody tr:hover td { background: var(--gray-50); }
+  table.calc-table .col-type {
+    font-weight: bold;
+    color: var(--navy);
+    background: var(--blue-bg) !important;
+    border-right: 2px solid var(--blue) !important;
+    white-space: nowrap;
+    width: 130px;
+  }
+  table.calc-table select,
+  table.calc-table input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--gray-300);
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--gray-900);
+  }
+  table.calc-table select:disabled {
+    background: var(--gray-50);
+    color: var(--gray-400);
+    cursor: not-allowed;
+  }
+  table.calc-table select:focus,
+  table.calc-table input:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(31,95,173,0.15);
+  }
+  table.calc-table input.qty-input { text-align: right; }
+  table.calc-table .price-cell,
+  table.calc-table .total-cell {
+    text-align: right;
+    font-family: Consolas, monospace;
+    font-weight: bold;
+    color: var(--gray-900);
+    white-space: nowrap;
+  }
+  table.calc-table .total-cell { color: var(--navy); font-size: 13px; }
+  table.calc-table .item-cell {
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    color: var(--gray-700);
+    cursor: pointer;
+    user-select: all;
+    white-space: nowrap;
+  }
+  table.calc-table .item-cell:hover { color: var(--blue); }
+  table.calc-table .row-remove {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: inherit;
+    line-height: 1;
+  }
+  table.calc-table .row-remove:hover { color: var(--red); background: var(--gray-100); }
+  table.calc-table tr.no-match td:not(.col-type):not(:last-child) .price-cell,
+  table.calc-table tr.no-match .price-cell,
+  table.calc-table tr.no-match .total-cell {
+    color: var(--red);
+  }
+
+  /* Column widths */
+  table.calc-table th.col-type-h    { width: 130px; }
+  table.calc-table th.col-brand     { width: 110px; }
+  table.calc-table th.col-epn       { min-width: 200px; }
+  table.calc-table th.col-color     { width: 150px; }
+  table.calc-table th.col-uom       { width: 80px; }
+  table.calc-table th.col-qty       { width: 80px; }
+  table.calc-table th.col-price     { width: 90px; }
+  table.calc-table th.col-total     { width: 100px; }
+  table.calc-table th.col-item      { width: 130px; }
+  table.calc-table th.col-rm        { width: 36px; }
+
+  /* Add Type bar */
+  .calc-add-row {
+    background: var(--gray-50);
+    border-top: 2px solid var(--gray-200);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .calc-add-row label {
+    font-size: 12px;
+    color: var(--gray-700);
+    font-weight: bold;
+  }
+  .calc-add-row select {
+    padding: 6px 10px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    background: #fff;
+    min-width: 200px;
+  }
+  .calc-add-row button {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .calc-add-row button:hover { background: var(--blue-light); }
+
+  /* Grand total */
+  .calc-grand-total {
+    margin-top: 16px;
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+  }
+  .calc-grand-total .label {
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .calc-grand-total .amount {
+    font-size: 22px;
+    font-weight: bold;
+    font-family: Consolas, monospace;
+  }
+  .calc-empty-state {
+    padding: 30px;
+    text-align: center;
+    color: var(--gray-500);
+    font-style: italic;
+    font-size: 13px;
+  }
+
 </style>
 </head>
 <body>
@@ -741,6 +999,7 @@
 <nav class="app-tabs">
   <button class="app-tab active" data-view="manager">📊 Data Manager</button>
   <button class="app-tab" data-view="lookup">🔎 Blaze Code Lookup</button>
+  <button class="app-tab" data-view="calc">💰 Price Calculator</button>
 </nav>
 
 <div class="app-view active" id="view-manager">
@@ -821,6 +1080,61 @@
     </div>
   </div>
 </div><!-- /view-lookup -->
+
+<div class="app-view" id="view-calc">
+  <div class="calc-wrap">
+    <div class="calc-header">
+      <h2>Price Calculator</h2>
+      <p>Pick State + Supplier once. Add product lines, enter quantities, see live totals.</p>
+    </div>
+
+    <div class="calc-globals">
+      <div class="calc-global-field">
+        <label for="calc-st">State</label>
+        <select id="calc-st"><option value="">— pick state —</option></select>
+      </div>
+      <div class="calc-global-field">
+        <label for="calc-supplier">Supplier</label>
+        <select id="calc-supplier"><option value="">— pick state first —</option></select>
+      </div>
+      <div class="calc-actions">
+        <button id="calc-clearAll">Clear All</button>
+      </div>
+    </div>
+
+    <div class="calc-table-wrap" id="calc-tableWrap">
+      <table class="calc-table" id="calc-table">
+        <thead>
+          <tr>
+            <th class="col-type-h">Type</th>
+            <th class="col-brand">Brand</th>
+            <th class="col-epn">Elite Product Name</th>
+            <th class="col-color">Color</th>
+            <th class="col-uom">UOM</th>
+            <th class="col-qty">Qty</th>
+            <th class="col-price">Price</th>
+            <th class="col-total">Total</th>
+            <th class="col-item">Item</th>
+            <th class="col-rm"></th>
+          </tr>
+        </thead>
+        <tbody id="calc-tbody">
+          <tr><td colspan="10" class="calc-empty-state">Pick State + Supplier above to start adding products.</td></tr>
+        </tbody>
+      </table>
+      <div class="calc-add-row" id="calc-addRow" style="display:none;">
+        <label for="calc-addType">Add Type:</label>
+        <select id="calc-addType"><option value="">— pick a type —</option></select>
+        <button id="calc-addTypeBtn">+ Add</button>
+      </div>
+    </div>
+
+    <div class="calc-grand-total">
+      <span class="label">Grand Total</span>
+      <span class="amount" id="calc-grandTotal">$0.00</span>
+    </div>
+  </div>
+</div><!-- /view-calc -->
 
 <!-- Edit Panel -->
 <div class="edit-panel" id="editPanel">
@@ -979,6 +1293,12 @@ function applyBootstrap(data) {
   // If the lookup tab is active, refresh State dropdown
   if (typeof populateLookupState === 'function' && document.getElementById('view-lookup') && document.getElementById('view-lookup').classList.contains('active')) {
     populateLookupState();
+  }
+  // If the calc tab is active, refresh its dropdowns
+  if (typeof populateCalcState === 'function' && document.getElementById('view-calc') && document.getElementById('view-calc').classList.contains('active')) {
+    populateCalcState();
+    if (calcState && calcState.st) populateCalcSupplier();
+    renderCalcTable();
   }
 }
 
@@ -1868,6 +2188,370 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   wireLookupDropdowns();
+
+  // ============================================================
+  // PRICE CALCULATOR
+  // ============================================================
+
+  // Default types pre-populated when the user picks state+supplier
+  const CALC_DEFAULT_TYPES = [
+    'Shingle','Hip & Ridge','Starter','Underlayment','Ice & Water',
+    'Ventilation','Pipe Boot','Flashing','Coil Nail','Plastic Cap Nail'
+  ];
+
+  // State for the calculator
+  const calcState = {
+    st: '',
+    supplier: '',
+    rows: []  // array of {id, type, brand, epn, color, uom, qty}
+  };
+  let calcRowIdCounter = 0;
+  function newRowId() { return 'calcrow_' + (++calcRowIdCounter); }
+
+  // Get all rows in RAW DATA matching state+supplier+type and filters
+  // filters: {brand, epn, color, uom} — empty/null means "any"
+  function calcFilterRows(type, filters) {
+    filters = filters || {};
+    return state.rows.filter(r => {
+      if (calcState.st && r.ST !== calcState.st) return false;
+      if (calcState.supplier && r.SUPPLIER !== calcState.supplier) return false;
+      if (type && r.Type !== type) return false;
+      if (filters.brand && r.Brand !== filters.brand) return false;
+      if (filters.epn && r['Elite Product Name'] !== filters.epn) return false;
+      if (filters.color) {
+        if (filters.color === '__NONE__') {
+          if (r.Color != null && String(r.Color).trim() !== '') return false;
+        } else {
+          if (String(r.Color || '') !== filters.color) return false;
+        }
+      }
+      if (filters.uom && r['Price UOM'] !== filters.uom) return false;
+      return true;
+    });
+  }
+
+  // Unique sorted values of `field` from rows
+  function uniqueVals(rows, field) {
+    const set = new Set();
+    for (const r of rows) {
+      let v = r[field];
+      if (v == null) {
+        if (field === 'Color') set.add('__NONE__');
+        continue;
+      }
+      v = String(v).trim();
+      if (v) set.add(v);
+    }
+    return Array.from(set).sort((a, b) => {
+      if (a === '__NONE__') return 1;
+      if (b === '__NONE__') return -1;
+      return a.localeCompare(b);
+    });
+  }
+
+  // Populate State dropdown (called on view activation)
+  function populateCalcState() {
+    const sel = document.getElementById('calc-st');
+    const states = Array.from(new Set(state.rows.map(r => r.ST).filter(Boolean))).sort();
+    const cur = calcState.st;
+    sel.innerHTML = '<option value="">— pick state —</option>' +
+      states.map(s => '<option value="' + escapeHtml(s) + '"' + (s === cur ? ' selected' : '') + '>' + escapeHtml(s) + '</option>').join('');
+  }
+  function populateCalcSupplier() {
+    const sel = document.getElementById('calc-supplier');
+    if (!calcState.st) {
+      sel.innerHTML = '<option value="">— pick state first —</option>';
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+    const sups = Array.from(new Set(
+      state.rows.filter(r => r.ST === calcState.st).map(r => r.SUPPLIER).filter(Boolean)
+    )).sort();
+    const cur = calcState.supplier;
+    sel.innerHTML = '<option value="">— pick supplier —</option>' +
+      sups.map(s => '<option value="' + escapeHtml(s) + '"' + (s === cur ? ' selected' : '') + '>' + escapeHtml(s) + '</option>').join('');
+  }
+  function populateCalcAddType() {
+    const sel = document.getElementById('calc-addType');
+    // Get all types available for current state+supplier
+    const types = Array.from(new Set(
+      state.rows
+        .filter(r => r.ST === calcState.st && r.SUPPLIER === calcState.supplier)
+        .map(r => r.Type)
+        .filter(Boolean)
+    )).sort();
+    // Filter out types already in the table
+    const existingTypes = new Set(calcState.rows.map(r => r.type));
+    const available = types.filter(t => !existingTypes.has(t));
+    sel.innerHTML = '<option value="">— pick a type —</option>' +
+      available.map(t => '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>').join('');
+  }
+
+  function initCalcRows() {
+    // Initialize the rows array with default types, only those that have data for current state/supplier
+    calcState.rows = [];
+    if (!calcState.st || !calcState.supplier) return;
+    const availableTypes = new Set(
+      state.rows
+        .filter(r => r.ST === calcState.st && r.SUPPLIER === calcState.supplier)
+        .map(r => r.Type)
+        .filter(Boolean)
+    );
+    for (const t of CALC_DEFAULT_TYPES) {
+      if (availableTypes.has(t)) {
+        calcState.rows.push({ id: newRowId(), type: t, brand: '', epn: '', color: '', uom: '', qty: '' });
+      }
+    }
+  }
+
+  function renderCalcTable() {
+    const tbody = document.getElementById('calc-tbody');
+    const addRow = document.getElementById('calc-addRow');
+
+    if (!calcState.st || !calcState.supplier) {
+      tbody.innerHTML = '<tr><td colspan="10" class="calc-empty-state">Pick State + Supplier above to start adding products.</td></tr>';
+      addRow.style.display = 'none';
+      document.getElementById('calc-grandTotal').textContent = '$0.00';
+      return;
+    }
+    if (calcState.rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="calc-empty-state">No types yet. Add one below.</td></tr>';
+      addRow.style.display = 'flex';
+      populateCalcAddType();
+      document.getElementById('calc-grandTotal').textContent = '$0.00';
+      return;
+    }
+
+    addRow.style.display = 'flex';
+    populateCalcAddType();
+
+    let grandTotal = 0;
+    const html = calcState.rows.map(row => renderCalcRow(row, (price, total) => { grandTotal += total; })).join('');
+    tbody.innerHTML = html;
+
+    // Compute totals after render (renderCalcRow returns HTML; we need a second pass)
+    // Recompute by iterating actual data:
+    grandTotal = 0;
+    for (const row of calcState.rows) {
+      const match = findMatchForRow(row);
+      const qty = parseFloat(row.qty);
+      if (match && !isNaN(qty) && qty > 0) {
+        grandTotal += qty * parseFloat(match['Current Price']);
+      }
+    }
+    document.getElementById('calc-grandTotal').textContent = '$' + grandTotal.toFixed(2);
+
+    // Wire all the row events
+    wireCalcRowEvents();
+  }
+
+  // Find the best matching RAW DATA row given the calc row's filters
+  // Returns the row or null. If multiple, picks lowest price.
+  function findMatchForRow(row) {
+    const filters = {
+      brand: row.brand,
+      epn: row.epn,
+      color: row.color,
+      uom: row.uom
+    };
+    const matches = calcFilterRows(row.type, filters);
+    if (matches.length === 0) return null;
+    // Prefer lowest current price
+    let best = null;
+    for (const m of matches) {
+      const p = parseFloat(m['Current Price']);
+      if (isNaN(p)) continue;
+      if (best === null || p < parseFloat(best['Current Price'])) best = m;
+    }
+    return best || matches[0];
+  }
+
+  function renderCalcRow(row) {
+    // Determine valid options for each dropdown based on current selections (cascading)
+    const brands = uniqueVals(calcFilterRows(row.type), 'Brand');
+    const epns = row.brand ? uniqueVals(calcFilterRows(row.type, { brand: row.brand }), 'Elite Product Name') : [];
+    const colors = (row.brand && row.epn) ? uniqueVals(calcFilterRows(row.type, { brand: row.brand, epn: row.epn }), 'Color') : [];
+    // UOM is auto-fillable if only one option after color (or after EPN if no colors)
+    const uomMatches = (row.brand && row.epn) ? calcFilterRows(row.type, { brand: row.brand, epn: row.epn, color: row.color }) : [];
+    const uoms = uniqueVals(uomMatches, 'Price UOM');
+
+    // Resolve match for pricing
+    const match = findMatchForRow(row);
+    const qty = parseFloat(row.qty);
+    const price = match ? parseFloat(match['Current Price']) : NaN;
+    const total = (!isNaN(qty) && qty > 0 && !isNaN(price)) ? qty * price : NaN;
+    const item = match ? (match.Item == null ? '' : String(match.Item)) : '';
+    const noMatch = (row.brand && row.epn && !match);
+
+    function optHtml(values, cur) {
+      return values.map(v => {
+        const label = (v === '__NONE__') ? '(no color)' : v;
+        return '<option value="' + escapeHtml(v) + '"' + (v === cur ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+      }).join('');
+    }
+
+    const colorSkip = (row.brand && row.epn && colors.length === 0);
+    const colorSel = colorSkip
+      ? '<select data-field="color" disabled><option value="">— no color —</option></select>'
+      : '<select data-field="color"' + (!row.epn ? ' disabled' : '') + '><option value="">— pick color —</option>' + optHtml(colors, row.color) + '</select>';
+
+    return '<tr class="' + (noMatch ? 'no-match' : '') + '" data-id="' + row.id + '">' +
+      '<td class="col-type">' + escapeHtml(row.type) + '</td>' +
+      '<td><select data-field="brand"><option value="">— brand —</option>' + optHtml(brands, row.brand) + '</select></td>' +
+      '<td><select data-field="epn"' + (!row.brand ? ' disabled' : '') + '><option value="">— product —</option>' + optHtml(epns, row.epn) + '</select></td>' +
+      '<td>' + colorSel + '</td>' +
+      '<td><select data-field="uom"' + (!row.epn ? ' disabled' : '') + '><option value="">—</option>' + optHtml(uoms, row.uom) + '</select></td>' +
+      '<td><input class="qty-input" data-field="qty" type="number" min="0" step="any" value="' + (row.qty || '') + '" placeholder="0"></td>' +
+      '<td class="price-cell">' + (isNaN(price) ? (noMatch ? 'n/a' : '—') : '$' + price.toFixed(2)) + '</td>' +
+      '<td class="total-cell">' + (isNaN(total) ? '' : '$' + total.toFixed(2)) + '</td>' +
+      '<td class="item-cell" title="Click to copy">' + escapeHtml(item) + '</td>' +
+      '<td><button class="row-remove" title="Remove row">×</button></td>' +
+      '</tr>';
+  }
+
+  function wireCalcRowEvents() {
+    const tbody = document.getElementById('calc-tbody');
+    tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+      const id = tr.dataset.id;
+      const rowObj = calcState.rows.find(r => r.id === id);
+      if (!rowObj) return;
+
+      // Selects (brand, epn, color, uom)
+      tr.querySelectorAll('select[data-field]').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const field = sel.dataset.field;
+          const val = sel.value;
+          rowObj[field] = val;
+          // Reset downstream fields when a dropdown changes
+          if (field === 'brand') { rowObj.epn = ''; rowObj.color = ''; rowObj.uom = ''; }
+          else if (field === 'epn') { rowObj.color = ''; rowObj.uom = ''; }
+          else if (field === 'color') { rowObj.uom = ''; }
+          // Auto-fill UOM if only one option after the change
+          autoFillUOM(rowObj);
+          renderCalcTable();
+        });
+      });
+
+      // Qty input
+      const qtyInput = tr.querySelector('input[data-field="qty"]');
+      if (qtyInput) {
+        qtyInput.addEventListener('input', () => {
+          rowObj.qty = qtyInput.value;
+          // Only update the totals, not re-render everything (preserves focus)
+          updateRowTotals(rowObj.id);
+          updateGrandTotal();
+        });
+      }
+
+      // Item click to copy
+      const itemCell = tr.querySelector('.item-cell');
+      if (itemCell && itemCell.textContent.trim()) {
+        itemCell.addEventListener('click', () => {
+          navigator.clipboard.writeText(itemCell.textContent.trim()).then(() => {
+            const orig = itemCell.textContent;
+            itemCell.style.color = 'var(--green)';
+            itemCell.textContent = 'Copied!';
+            setTimeout(() => {
+              itemCell.style.color = '';
+              itemCell.textContent = orig;
+            }, 1000);
+          });
+        });
+      }
+
+      // Remove button
+      const rm = tr.querySelector('.row-remove');
+      if (rm) {
+        rm.addEventListener('click', () => {
+          calcState.rows = calcState.rows.filter(r => r.id !== id);
+          renderCalcTable();
+        });
+      }
+    });
+  }
+
+  function autoFillUOM(rowObj) {
+    if (!rowObj.brand || !rowObj.epn) return;
+    const uomMatches = calcFilterRows(rowObj.type, { brand: rowObj.brand, epn: rowObj.epn, color: rowObj.color });
+    const uoms = uniqueVals(uomMatches, 'Price UOM');
+    if (uoms.length === 1) rowObj.uom = uoms[0];
+  }
+
+  function updateRowTotals(rowId) {
+    const rowObj = calcState.rows.find(r => r.id === rowId);
+    if (!rowObj) return;
+    const tr = document.querySelector('tr[data-id="' + rowId + '"]');
+    if (!tr) return;
+    const match = findMatchForRow(rowObj);
+    const qty = parseFloat(rowObj.qty);
+    const price = match ? parseFloat(match['Current Price']) : NaN;
+    const total = (!isNaN(qty) && qty > 0 && !isNaN(price)) ? qty * price : NaN;
+    const totalCell = tr.querySelector('.total-cell');
+    if (totalCell) totalCell.textContent = isNaN(total) ? '' : '$' + total.toFixed(2);
+  }
+
+  function updateGrandTotal() {
+    let grandTotal = 0;
+    for (const row of calcState.rows) {
+      const match = findMatchForRow(row);
+      const qty = parseFloat(row.qty);
+      if (match && !isNaN(qty) && qty > 0) {
+        grandTotal += qty * parseFloat(match['Current Price']);
+      }
+    }
+    document.getElementById('calc-grandTotal').textContent = '$' + grandTotal.toFixed(2);
+  }
+
+  function wireCalcGlobals() {
+    document.getElementById('calc-st').addEventListener('change', e => {
+      calcState.st = e.target.value;
+      calcState.supplier = '';
+      populateCalcSupplier();
+      // When state changes: keep row selections, just re-price by changing the lookup context
+      if (calcState.rows.length === 0 && calcState.st) {
+        // First time picking state — wait for supplier before initializing rows
+      }
+      renderCalcTable();
+    });
+    document.getElementById('calc-supplier').addEventListener('change', e => {
+      calcState.supplier = e.target.value;
+      // First time picking supplier: initialize default rows. After that: keep selections.
+      if (calcState.rows.length === 0 && calcState.supplier) {
+        initCalcRows();
+      }
+      renderCalcTable();
+    });
+    document.getElementById('calc-clearAll').addEventListener('click', () => {
+      if (calcState.rows.length === 0 || confirm('Clear all rows and selections?')) {
+        calcState.rows = [];
+        renderCalcTable();
+      }
+    });
+    document.getElementById('calc-addTypeBtn').addEventListener('click', () => {
+      const sel = document.getElementById('calc-addType');
+      const type = sel.value;
+      if (!type) return;
+      calcState.rows.push({ id: newRowId(), type, brand: '', epn: '', color: '', uom: '', qty: '' });
+      renderCalcTable();
+    });
+  }
+
+  // Hook into tab switch to populate calc state dropdown
+  const origTabClickHandler_calc = function() {
+    document.querySelectorAll('.app-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.view === 'calc' && state.rows.length > 0) {
+          populateCalcState();
+          if (calcState.st) populateCalcSupplier();
+          renderCalcTable();
+        }
+      });
+    });
+  };
+  origTabClickHandler_calc();
+
+  wireCalcGlobals();
 
   loadBootstrap(true);
 
