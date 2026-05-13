@@ -351,6 +351,34 @@
     cursor: pointer;
   }
   .col-picker label:hover { background: var(--gray-100); }
+  .col-picker .picker-done {
+    width: 100%;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    border-top: 1px solid var(--gray-200);
+    position: sticky;
+    bottom: 0;
+  }
+  .col-picker .picker-done:hover { background: var(--blue-light); }
+  .col-picker .picker-header {
+    padding: 8px 12px;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-700);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 
   /* ============ MODAL ============ */
   .modal-backdrop {
@@ -577,7 +605,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.0</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.1</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -1327,19 +1355,25 @@ function escapeCsv(s) {
 // COLUMN PICKER
 // ============================================================
 function toggleColPicker(e) {
+  e.stopPropagation();
   let pop = document.querySelector('.col-picker');
   if (pop) { pop.remove(); return; }
   pop = document.createElement('div');
   pop.className = 'col-picker';
-  pop.innerHTML = ALL_COLUMNS.map(col =>
+  let inner = '<div class="picker-header">Show / Hide Columns</div>';
+  inner += ALL_COLUMNS.map(col =>
     `<label><input type="checkbox" data-col="${escapeHtml(col)}" ${state.visibleColumns.has(col) ? 'checked' : ''}> ${escapeHtml(col)}</label>`
   ).join('');
+  inner += '<button class="picker-done" type="button">✓ Done</button>';
+  pop.innerHTML = inner;
   const rect = e.target.getBoundingClientRect();
   pop.style.top = (rect.bottom + 4) + 'px';
   pop.style.left = rect.left + 'px';
   document.body.appendChild(pop);
+  // Checkboxes: do NOT close picker — let user toggle multiple
   pop.querySelectorAll('input').forEach(cb => {
-    cb.addEventListener('change', () => {
+    cb.addEventListener('change', (ev) => {
+      ev.stopPropagation();
       const col = cb.dataset.col;
       if (cb.checked) state.visibleColumns.add(col);
       else state.visibleColumns.delete(col);
@@ -1347,13 +1381,28 @@ function toggleColPicker(e) {
       renderTable();
     });
   });
+  // Done button closes
+  pop.querySelector('.picker-done').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    pop.remove();
+    document.removeEventListener('click', closeColPicker, true);
+  });
+  // Outside click closes — use capture phase + persistent listener (not 'once')
+  // so it survives checkbox clicks
   setTimeout(() => {
-    document.addEventListener('click', closeColPicker, { once: true });
+    document.addEventListener('click', closeColPicker, true);
   }, 0);
 }
 function closeColPicker(e) {
   const pop = document.querySelector('.col-picker');
-  if (pop && !pop.contains(e.target) && e.target.id !== 'colPickerBtn') pop.remove();
+  if (!pop) {
+    document.removeEventListener('click', closeColPicker, true);
+    return;
+  }
+  if (pop.contains(e.target)) return;            // click inside picker → keep open
+  if (e.target.id === 'colPickerBtn') return;    // click on toggle button → let toggle handle it
+  pop.remove();
+  document.removeEventListener('click', closeColPicker, true);
 }
 
 // ============================================================
@@ -1503,7 +1552,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.2.0';
+  const APP_VERSION = 'v1.2.1';
   let isUnlocked = false;
 
   function showLogin() {
