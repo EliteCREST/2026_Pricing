@@ -577,7 +577,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.1.0</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.0</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -728,20 +728,20 @@ function safeCache(obj) {
 
 // All columns in the expected order
 const ALL_COLUMNS = [
-  'SUPPLIER','ST','Product ID','Branch ID','Item #','Item Color','Item',
+  'SUPPLIER','ST','Blaze Code','Branch ID','Item #','Item Color','Item Final',
   'Type','Type Code','Description','Description Code','Brand','BrandLine',
   'Elite Product Name','Measurement','Color','Color Code','Price UOM',
-  'Current Price','Blaze Code','Price Sheet'
+  'Current Price','Price Sheet'
 ];
 
 const DEFAULT_VISIBLE = new Set([
-  'SUPPLIER','ST','Item #','Item Color','Type','Brand','Elite Product Name',
-  'Color','Price UOM','Current Price','Blaze Code'
+  'SUPPLIER','ST','Blaze Code','Item #','Item Color','Type','Brand','Elite Product Name',
+  'Color','Price UOM','Current Price'
 ]);
 
 const DERIVED_FIELDS = new Set(['Type Code','Description Code','Color Code','Item #','Item Color','Blaze Code']);
 const NUMERIC_FIELDS = new Set(['Current Price']);
-const CODE_FIELDS = new Set(['Type Code','Description Code','Color Code','Blaze Code','Item #','Item Color','Item']);
+const CODE_FIELDS = new Set(['Type Code','Description Code','Color Code','Blaze Code','Item #','Item Color','Item Final']);
 
 // ============================================================
 // STATE
@@ -1049,8 +1049,8 @@ function openEditPanel(row, isAdd = false) {
 
   // Group fields logically
   const groups = [
-    { title: 'Source', fields: ['SUPPLIER','ST','Product ID','Branch ID','Price Sheet'] },
-    { title: 'Item', fields: ['Item','Item #','Item Color'] },
+    { title: 'Source', fields: ['SUPPLIER','ST','Branch ID','Price Sheet'] },
+    { title: 'Item', fields: ['Item Final','Item #','Item Color'] },
     { title: 'Product', fields: ['Type','Brand','BrandLine','Description','Elite Product Name','Measurement'] },
     { title: 'Color & Pricing', fields: ['Color','Price UOM','Current Price'] },
     { title: 'Derived Codes (auto)', fields: ['Type Code','Description Code','Color Code','Blaze Code'] }
@@ -1128,7 +1128,7 @@ function buildField(name, formData) {
   if (DERIVED_FIELDS.has(name)) input.classList.add('derived');
 
   // For Type/Color/EPN/Item — trigger live derivation preview
-  if (['Type','Color','Elite Product Name','Item','Brand'].includes(name)) {
+  if (['Type','Color','Elite Product Name','Item Final','Brand'].includes(name)) {
     input.addEventListener('change', () => recomputeDerived());
     input.addEventListener('input', () => recomputeDerived());
   }
@@ -1161,9 +1161,9 @@ function recomputeDerived() {
   } else {
     setFieldValue('Color Code', '');
   }
-  // Item # & Item Color from Item
-  if (fd['Item']) {
-    const item = String(fd['Item']).trim();
+  // Item # & Item Color from Item Final
+  if (fd['Item Final']) {
+    const item = String(fd['Item Final']).trim();
     let itemColor = fd['Item Color'] || '';
     if (!itemColor) {
       const m3 = item.match(/(\d{3})$/);
@@ -1503,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.1.0';
+  const APP_VERSION = 'v1.2.0';
   let isUnlocked = false;
 
   function showLogin() {
