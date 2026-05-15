@@ -677,7 +677,9 @@
   <div class="filter-chip" data-filter="Color">Color <span class="count"></span></div>
   <div class="filter-chip" data-filter="Price UOM">UOM <span class="count"></span></div>
   <button class="action secondary" id="colPickerBtn">⚙ Columns</button>
-  <button class="action secondary" id="exportBtn">⬇ Export CSV</button>
+  <button class="action secondary" id="exportBtn">⬇ Export Current Filter</button>
+  <button class="action secondary" id="exportViewBtn">⬇ Export Current View</button>
+  <button class="action secondary" id="exportAllBtn">⬇ Export All Data</button>
   <button class="action" id="addRowBtn">+ Add Row</button>
 </div>
 
@@ -1474,11 +1476,23 @@ async function deleteRow() {
 // ============================================================
 // EXPORT
 // ============================================================
+// v1.2.4: Export Current View — all filtered/searched products, with colors grouped A-Z.
+// Honors active filters and search. Ignores the 1000-row on-screen render cap.
+// Multi-color groups: Color = comma-separated A-Z list, Blaze Code = shared prefix,
+// per-color fields (Item Color, Item Final, Color Code) left blank.
 function exportCSV() {
-  // v1.2.3: export exactly what's on screen right now.
-  // Reads the rendered table cells, so any color the user has picked from a dropdown
-  // is reflected in the export (Item Color, Item Final, Color Code, Blaze Code for that color).
-  // Rows where no color was picked export in the grouped state (combined colors, per-color fields blank).
+  _exportProducts(state.filtered, `pricing_export_${new Date().toISOString().slice(0,10)}.csv`, 'Exported');
+}
+
+// v1.2.4: Export All Data — literally every product across the entire dataset, ignoring filters/search.
+function exportAllCSV() {
+  _exportProducts(state.rows, `pricing_export_all_${new Date().toISOString().slice(0,10)}.csv`, 'Exported all');
+}
+
+// v1.2.4: Export Current View — exactly what's rendered on screen right now, including any color picks
+// the user has made from dropdowns. Rows without a color picked export with comma-separated colors
+// (matching how the table displays them). Capped at the on-screen 1000-row render limit.
+function exportCurrentView() {
   const cols = ALL_COLUMNS.filter(c => state.visibleColumns.has(c));
   const lines = [cols.map(escapeCsv).join(',')];
 
@@ -1490,7 +1504,6 @@ function exportCSV() {
     const out = cols.map(col => {
       const td = tr.querySelector(`td[data-col="${col.replace(/"/g, '\\"')}"]`);
       if (!td) return '';
-      // Color cell may be either plain text or a <select> dropdown
       const sel = td.querySelector('select.color-picker');
       let v;
       if (sel) {
@@ -1519,10 +1532,67 @@ function exportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `pricing_export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `pricing_export_view_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   toast(`Exported ${count} products`, 'success');
+}
+
+// Shared exporter — groups rows by product and writes a CSV with colors A-Z per row.
+function _exportProducts(sourceRows, filename, toastPrefix) {
+  const cols = ALL_COLUMNS.filter(c => state.visibleColumns.has(c));
+  const lines = [cols.map(escapeCsv).join(',')];
+
+  const groups = new Map();
+  for (const r of sourceRows) {
+    const k = _groupKey(r);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+
+  let count = 0;
+  groups.forEach(group => {
+    // Dedupe colors case-insensitively, skip blanks
+    const seen = new Set();
+    const uniqueRows = [];
+    group.forEach(r => {
+      const c = r['Color'] == null ? '' : String(r['Color']).trim();
+      if (!c) return;
+      const key = c.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      uniqueRows.push(r);
+    });
+
+    const rep = (uniqueRows.length === 1) ? uniqueRows[0] : group[0];
+    const isMulti = uniqueRows.length >= 2;
+    // Sort colors A-Z to match dropdown order
+    const colorList = uniqueRows
+      .map(r => String(r['Color']).trim())
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      .join(', ');
+
+    const out = cols.map(col => {
+      if (isMulti) {
+        if (col === 'Color') return escapeCsv(colorList);
+        if (col === 'Blaze Code') return escapeCsv(_blazePrefix(rep['Blaze Code']));
+        if (col === 'Item Color' || col === 'Item Final' || col === 'Color Code') return '';
+      }
+      const v = rep[col];
+      return escapeCsv(v == null ? '' : String(v));
+    }).join(',');
+    lines.push(out);
+    count++;
+  });
+
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`${toastPrefix} ${count} products`, 'success');
 }
 
 function escapeCsv(s) {
@@ -1718,6 +1788,8 @@ document.addEventListener('DOMContentLoaded', () => {
     openEditPanel({}, true);
   });
   document.getElementById('exportBtn').addEventListener('click', exportCSV);
+  document.getElementById('exportViewBtn').addEventListener('click', exportCurrentView);
+  document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
   document.getElementById('colPickerBtn').addEventListener('click', toggleColPicker);
   document.getElementById('editPanelClose').addEventListener('click', closeEditPanel);
   document.getElementById('cancelBtn').addEventListener('click', closeEditPanel);
