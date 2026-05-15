@@ -228,7 +228,7 @@
   table.data tbody tr.selected td { background: var(--blue-bg) !important; }
   table.data td.numeric { text-align: right; font-family: Consolas, monospace; }
   table.data td.code { font-family: Consolas, monospace; font-size: 11px; }
-  /* v1.2.2 color dropdown */
+  /* v1.2.3 color dropdown */
   table.data td.color-select-cell { padding: 3px 6px; overflow: visible; }
   table.data td.color-select-cell select.color-picker {
     width: 100%;
@@ -620,7 +620,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.2</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.3</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -1029,7 +1029,7 @@ function buildHeaderRow() {
   });
 }
 
-// v1.2.2: group multi-color products into a single row with a Color dropdown.
+// v1.2.3: group multi-color products into a single row with a Color dropdown.
 // Group key = Supplier + ST + Blaze Code prefix (everything before the final "-XXXX" color segment).
 // Item Color and Item Final are hidden until the user picks a color from the dropdown.
 function _blazePrefix(blaze) {
@@ -1099,7 +1099,7 @@ function renderTable() {
           `<option value="${u.rowIdxInGroup}">${escapeHtml(u.color)}</option>`
         ).join('');
         const opts = '<option value="">— Select Color —</option>' + optHtml;
-        return `<td class="color-select-cell"><select class="color-picker" data-group-idx="${groupsToRender.indexOf(group)}">${opts}</select></td>`;
+        return `<td class="color-select-cell" data-col="Color"><select class="color-picker" data-group-idx="${groupsToRender.indexOf(group)}">${opts}</select></td>`;
       } else {
         v = rep[col];
         if (v == null) v = '';
@@ -1436,61 +1436,54 @@ async function deleteRow() {
 // EXPORT
 // ============================================================
 function exportCSV() {
-  // v1.2.2: export exactly what the user sees on screen.
-  // Multi-color groups: Color = comma-separated list, Item Color / Item Final / Color Code left blank
-  // (matching the table view, where those cells are blank until a color is picked).
-  // Blaze Code shows the shared prefix.
-  // Single-color and no-color groups export as-is.
+  // v1.2.3: export exactly what's on screen right now.
+  // Reads the rendered table cells, so any color the user has picked from a dropdown
+  // is reflected in the export (Item Color, Item Final, Color Code, Blaze Code for that color).
+  // Rows where no color was picked export in the grouped state (combined colors, per-color fields blank).
   const cols = ALL_COLUMNS.filter(c => state.visibleColumns.has(c));
   const lines = [cols.map(escapeCsv).join(',')];
 
-  // Build groups using the same grouping logic as renderTable
-  const groups = new Map();
-  for (const r of state.filtered) {
-    const k = _groupKey(r);
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(r);
-  }
+  const tbody = document.getElementById('bodyRows');
+  const rows = tbody.querySelectorAll('tr[data-row]');
+  let count = 0;
 
-  let groupCount = 0;
-  groups.forEach(group => {
-    // Dedupe colors case-insensitively, skip blanks
-    const seen = new Set();
-    const uniqueRows = [];
-    group.forEach(r => {
-      const c = r['Color'] == null ? '' : String(r['Color']).trim();
-      if (!c) return;
-      const key = c.toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
-      uniqueRows.push(r);
-    });
-
-    const rep = (uniqueRows.length === 1) ? uniqueRows[0] : group[0];
-    const isMulti = uniqueRows.length >= 2;
-    const colorList = uniqueRows.map(r => String(r['Color']).trim()).join(', ');
-
+  rows.forEach(tr => {
     const out = cols.map(col => {
-      if (isMulti) {
-        if (col === 'Color') return escapeCsv(colorList);
-        if (col === 'Blaze Code') return escapeCsv(_blazePrefix(rep['Blaze Code']));
-        if (col === 'Item Color' || col === 'Item Final' || col === 'Color Code') return '';
+      const td = tr.querySelector(`td[data-col="${col.replace(/"/g, '\\"')}"]`);
+      if (!td) return '';
+      // Color cell may be either plain text or a <select> dropdown
+      const sel = td.querySelector('select.color-picker');
+      let v;
+      if (sel) {
+        if (sel.value === '') {
+          // No color picked — export the full deduped list shown in the dropdown options
+          const opts = Array.from(sel.options).filter(o => o.value !== '');
+          v = opts.map(o => o.textContent).join(', ');
+        } else {
+          // Color picked — export just the selected color name
+          v = sel.options[sel.selectedIndex].textContent;
+        }
+      } else {
+        v = td.textContent || '';
       }
-      const v = rep[col];
-      return escapeCsv(v == null ? '' : String(v));
+      // Strip the $ + thousands formatting we add to numeric cells so CSV stays clean numbers
+      if (NUMERIC_FIELDS.has(col) && v.startsWith('$')) {
+        v = v.replace(/[$,]/g, '');
+      }
+      return escapeCsv(v);
     }).join(',');
     lines.push(out);
-    groupCount++;
+    count++;
   });
 
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = `pricing_export_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast(`Exported ${groupCount} products`, 'success');
+  toast(`Exported ${count} products`, 'success');
 }
 
 function escapeCsv(s) {
@@ -1702,7 +1695,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.2.2';
+  const APP_VERSION = 'v1.2.3';
   let isUnlocked = false;
 
   function showLogin() {
