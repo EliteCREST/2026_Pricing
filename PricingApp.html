@@ -1094,8 +1094,11 @@ function renderTable() {
         // Show the shared prefix so the user sees the product, not one specific color's code
         v = _blazePrefix(rep['Blaze Code']);
       } else if (showDropdown && col === 'Color') {
-        // Render the dropdown using the deduped color list
-        const optHtml = uniqueColors.map(u =>
+        // Render the dropdown using the deduped color list, sorted A-Z
+        const sortedColors = uniqueColors.slice().sort((a, b) =>
+          a.color.toLowerCase().localeCompare(b.color.toLowerCase())
+        );
+        const optHtml = sortedColors.map(u =>
           `<option value="${u.rowIdxInGroup}">${escapeHtml(u.color)}</option>`
         ).join('');
         const opts = '<option value="">— Select Color —</option>' + optHtml;
