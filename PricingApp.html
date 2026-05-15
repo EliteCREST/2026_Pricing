@@ -620,7 +620,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.3</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.4</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -1045,6 +1045,20 @@ function _groupKey(row) {
 
 function renderTable() {
   const tbody = document.getElementById('bodyRows');
+
+  // v1.2.4: snapshot any color picks the user has made so we can restore them after re-render.
+  // Keyed by group key (Supplier|ST|BlazeCodePrefix); value = the picked color name (lowercase, trimmed).
+  const userPicks = new Map();
+  tbody.querySelectorAll('tr[data-row]').forEach(tr => {
+    const sel = tr.querySelector('select.color-picker');
+    if (!sel || sel.value === '') return;
+    const rowIdx = parseInt(tr.dataset.row);
+    const row = state.rows.find(r => r._row === rowIdx);
+    if (!row) return;
+    const pickedColorName = sel.options[sel.selectedIndex].textContent.trim().toLowerCase();
+    userPicks.set(_groupKey(row), pickedColorName);
+  });
+
   const visibleCount = state.filtered.length;
   document.getElementById('visibleCount').textContent = visibleCount;
   document.getElementById('emptyState').style.display = visibleCount === 0 ? 'block' : 'none';
@@ -1170,6 +1184,28 @@ function renderTable() {
       if (row) openEditPanel(row);
     });
   });
+
+  // v1.2.4: restore any color picks the user had before this re-render
+  if (userPicks.size > 0) {
+    tbody.querySelectorAll('select.color-picker').forEach(sel => {
+      const tr = sel.closest('tr');
+      const rowIdx = parseInt(tr.dataset.row);
+      const row = state.rows.find(r => r._row === rowIdx);
+      if (!row) return;
+      const key = _groupKey(row);
+      const wantedColor = userPicks.get(key);
+      if (!wantedColor) return;
+      // Find the option matching the picked color name (case-insensitive)
+      for (const opt of sel.options) {
+        if (opt.value === '') continue;
+        if (opt.textContent.trim().toLowerCase() === wantedColor) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change'));
+          break;
+        }
+      }
+    });
+  }
 }
 
 // ============================================================
@@ -1698,7 +1734,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.2.3';
+  const APP_VERSION = 'v1.2.4';
   let isUnlocked = false;
 
   function showLogin() {
