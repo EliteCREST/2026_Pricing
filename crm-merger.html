@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Source-of-Truth Merger v1.2.2 | ECS Brands</title>
+<title>CRM Source-of-Truth Merger v1.3.0 | ECS Brands</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
@@ -185,11 +185,142 @@
     background: white;
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 20px 24px;
+    padding: 0;
     display: none;
+    overflow: hidden;
   }
   .report.shown { display: block; }
-  .report h2 { margin-bottom: 14px; }
+  .report-body { padding: 20px 24px; }
+  .report-body h2 { margin-bottom: 14px; }
+
+  /* Tab strip */
+  .tabs {
+    display: flex;
+    background: #FAFBFD;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    user-select: none;
+  }
+  .tab:hover { color: var(--navy); background: white; }
+  .tab.active {
+    color: var(--navy);
+    border-bottom-color: var(--blue);
+    background: white;
+  }
+  .tab.has-issues {
+    color: var(--amber);
+  }
+  .tab.has-issues.active {
+    color: var(--amber);
+    border-bottom-color: var(--amber);
+  }
+  .tab-badge {
+    display: inline-block;
+    background: var(--amber);
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Orphan investigator panel */
+  .orphan-section {
+    margin-bottom: 26px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .orphan-section-header {
+    background: var(--navy);
+    color: white;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .orphan-section-header .label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .orphan-section-header .count {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 400;
+    letter-spacing: 0.3px;
+  }
+  .orphan-section-header button {
+    background: var(--gold);
+    color: var(--navy);
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+  .orphan-section-header button:hover:not(:disabled) {
+    background: #B0913F;
+    color: white;
+  }
+  .orphan-explainer {
+    background: var(--light-blue-bg);
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--navy);
+    border-bottom: 1px solid var(--border);
+  }
+  .orphan-explainer strong { color: var(--blue); }
+  table.orphans {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  table.orphans th {
+    background: #F1F4F9;
+    color: var(--navy);
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.orphans td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #EDF0F4;
+    font-family: 'Consolas', 'Courier New', monospace;
+    word-break: break-all;
+  }
+  table.orphans tr:last-child td { border-bottom: none; }
+  table.orphans .num { text-align: right; font-weight: 700; color: var(--navy); }
+  table.orphans .ctx { font-family: Arial, sans-serif; color: var(--text-muted); }
+  .no-issues {
+    background: #F1F8F3;
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 20px 24px;
+    text-align: center;
+    font-weight: 700;
+    border-radius: 4px;
+  }
 
   .stats {
     display: grid;
@@ -287,7 +418,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>CRM Source-of-Truth Merger <span class="version">v1.2.2</span></h1>
+    <h1>CRM Source-of-Truth Merger <span class="version">v1.3.0</span></h1>
     <div class="subtitle">Merges Pricing + Products + Regions + Suppliers into one denormalized workbook</div>
   </div>
   <div class="badge">Elite Tools</div>
@@ -339,10 +470,20 @@
   </div>
 
   <div class="report" id="report">
-    <h2>Merge Report</h2>
-    <div class="stats" id="stats"></div>
-    <table class="joins" id="joins"></table>
-    <div class="log" id="log"></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="overview" id="tab-overview">Merge Report</button>
+      <button class="tab" data-tab="issues" id="tab-issues">Issues to Investigate</button>
+    </div>
+    <div class="report-body">
+      <div class="tab-pane active" id="pane-overview">
+        <div class="stats" id="stats"></div>
+        <table class="joins" id="joins"></table>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="tab-pane" id="pane-issues">
+        <div id="issues-content"></div>
+      </div>
+    </div>
   </div>
 
   <div class="footer">
@@ -462,6 +603,10 @@ const MANUFACTURER_SHORT_CODES = {
 // ============================================================
 const loaded = { pricing: null, products: null, regions: null, suppliers: null };
 
+// Rows that failed each join, keyed by lookup name. Populated by runMerge,
+// consumed by the Issues tab UI + per-section download buttons.
+let lastOrphans = { products: [], regions: [], suppliers: [] };
+
 // ============================================================
 // CDN HEALTH CHECK
 // ============================================================
@@ -508,6 +653,16 @@ document.querySelectorAll('.dropzone').forEach(zone => {
 
 document.getElementById('btn-merge').addEventListener('click', runMerge);
 document.getElementById('btn-reset').addEventListener('click', resetAll);
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pane-' + tab.dataset.tab).classList.add('active');
+  });
+});
 
 // ============================================================
 // FILE LOADING
@@ -562,6 +717,7 @@ function updateReadyState() {
 
 function resetAll() {
   Object.keys(loaded).forEach(k => loaded[k] = null);
+  lastOrphans = { products: [], regions: [], suppliers: [] };
   document.querySelectorAll('.dropzone').forEach(z => {
     z.classList.remove('loaded', 'error');
     z.querySelector('.dz-input').value = '';
@@ -571,6 +727,13 @@ function resetAll() {
     s.textContent = 'Awaiting file...';
   });
   document.getElementById('report').classList.remove('shown');
+  // Reset tab state
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-overview').classList.add('active');
+  document.getElementById('pane-overview').classList.add('active');
+  document.getElementById('tab-issues').classList.remove('has-issues');
+  document.getElementById('tab-issues').innerHTML = 'Issues to Investigate';
   updateReadyState();
 }
 
@@ -609,24 +772,26 @@ function runMerge() {
   logLine(`Base: pricing = ${merged.length.toLocaleString()} rows`);
 
   const joinReport = [];
+  // Reset orphan storage at the start of every merge
+  lastOrphans = { products: [], regions: [], suppliers: [] };
 
   for (const spec of JOINS) {
     const lookupRows = prepLookup(loaded[spec.lookup], spec.prefix);
     const pkCol = spec.prefix + spec.lookup_pk;
     const idx = buildIndex(lookupRows, pkCol);
 
-    let unmatched = 0;
+    const orphansForSpec = [];
     for (const row of merged) {
       const fkVal = row[spec.pricing_fk];
       const match = idx.get(fkVal);
       if (match) {
         Object.assign(row, match);
       } else {
-        unmatched++;
-        // Still need every column present so the workbook is rectangular
-        // (we'll fill on the rectangularize pass below)
+        orphansForSpec.push(row);
       }
     }
+    lastOrphans[spec.lookup] = orphansForSpec;
+    const unmatched = orphansForSpec.length;
 
     joinReport.push({
       lookup: spec.lookup,
@@ -816,7 +981,139 @@ function renderReport(rows, cols, joinReport) {
   }
   joinsTable.innerHTML = html;
 
+  // Issues tab: render orphan details + update tab badge
+  renderIssuesTab(joinReport);
+
   document.getElementById('report').classList.add('shown');
+}
+
+// ============================================================
+// ISSUES TAB
+// ============================================================
+// Shows the orphan rows from each join, grouped by the unmatched key, with
+// sample context to help identify which CRM records need attention.
+function renderIssuesTab(joinReport) {
+  const issuesTab = document.getElementById('tab-issues');
+  const content = document.getElementById('issues-content');
+
+  const totalOrphans = joinReport.reduce((sum, r) => sum + r.rows_unmatched, 0);
+
+  // Update the tab itself (color + badge)
+  if (totalOrphans === 0) {
+    issuesTab.classList.remove('has-issues');
+    issuesTab.innerHTML = 'Issues to Investigate';
+    content.innerHTML = '<div class="no-issues">All joins are clean. Nothing to investigate.</div>';
+    return;
+  }
+  issuesTab.classList.add('has-issues');
+  issuesTab.innerHTML = `Issues to Investigate <span class="tab-badge">${totalOrphans.toLocaleString()}</span>`;
+
+  // For each join that had orphans, render a section
+  const sections = [];
+  for (const spec of JOINS) {
+    const orphanRows = lastOrphans[spec.lookup];
+    if (!orphanRows || orphanRows.length === 0) continue;
+    sections.push(renderOrphanSection(spec, orphanRows));
+  }
+  content.innerHTML = sections.join('');
+
+  // Wire each section's download button
+  document.querySelectorAll('[data-orphan-download]').forEach(btn => {
+    btn.addEventListener('click', () => downloadOrphans(btn.dataset.orphanDownload));
+  });
+}
+
+// Render a single orphan section: header + explainer + grouped table + download button.
+// Groups orphans by the unmatched FK value to show distinct problems rather than every row.
+function renderOrphanSection(spec, orphanRows) {
+  // Group by the unmatched FK
+  const grouped = new Map();  // fkValue -> { count, sampleRow }
+  for (const row of orphanRows) {
+    const fk = row[spec.pricing_fk];
+    if (!grouped.has(fk)) {
+      grouped.set(fk, { count: 0, sampleRow: row });
+    }
+    grouped.get(fk).count++;
+  }
+
+  // Sort by count desc so the biggest problems are at top
+  const sorted = [...grouped.entries()].sort((a, b) => b[1].count - a[1].count);
+
+  // Pick a context column to show for each lookup type — the column most likely
+  // to help the user identify what's missing. Even though the lookup itself
+  // failed, sibling lookups may have succeeded, so we can still show e.g.
+  // the Supplier_Name even when the Region join failed.
+  const contextField = {
+    products:  'Product_Description',
+    regions:   'Supplier_Name',         // if region failed, supplier likely succeeded
+    suppliers: 'Region_Name',           // mirror of above
+  }[spec.lookup];
+  const contextLabel = {
+    products:  'Sample Product (no match in Products sheet)',
+    regions:   'Sample Supplier on these orphaned rows',
+    suppliers: 'Sample Region on these orphaned rows',
+  }[spec.lookup];
+
+  // Build the rows table
+  let rowsHtml = `
+    <tr>
+      <th>Unmatched ${spec.pricing_fk}</th>
+      <th>Affected Rows</th>
+      <th>${contextLabel}</th>
+    </tr>
+  `;
+  for (const [fk, info] of sorted) {
+    const ctx = info.sampleRow[contextField] || '(no context available)';
+    const fkDisplay = fk == null ? '(null)' : fk;
+    rowsHtml += `
+      <tr>
+        <td>${escapeHtml(String(fkDisplay))}</td>
+        <td class="num">${info.count.toLocaleString()}</td>
+        <td class="ctx">${escapeHtml(String(ctx))}</td>
+      </tr>
+    `;
+  }
+
+  // Explainer text -- tells the user what this means in plain English
+  const explainer = {
+    products:  `Pricing rows whose <strong>ProductId</strong> doesn't exist in the Products export. The product may have been deleted or never made it into the export. ${sorted.length} distinct missing product${sorted.length===1?'':'s'} affect ${orphanRows.length.toLocaleString()} pricing row${orphanRows.length===1?'':'s'}.`,
+    regions:   `Pricing rows whose <strong>RegionId</strong> doesn't exist in the Regions export. The region may have been archived, deleted, or never made it into the export. ${sorted.length} distinct missing region${sorted.length===1?'':'s'} affect ${orphanRows.length.toLocaleString()} pricing row${orphanRows.length===1?'':'s'}.`,
+    suppliers: `Pricing rows whose <strong>SupplierLocationId</strong> doesn't exist in the Supplier Locations export. ${sorted.length} distinct missing supplier${sorted.length===1?'':'s'} affect ${orphanRows.length.toLocaleString()} pricing row${orphanRows.length===1?'':'s'}.`,
+  }[spec.lookup];
+
+  return `
+    <div class="orphan-section">
+      <div class="orphan-section-header">
+        <span class="label">
+          ${spec.lookup.toUpperCase()} JOIN
+          <span class="count">— ${orphanRows.length.toLocaleString()} orphan rows, ${sorted.length} distinct ${spec.pricing_fk}${sorted.length===1?'':'s'}</span>
+        </span>
+        <button data-orphan-download="${spec.lookup}">Download Orphans</button>
+      </div>
+      <div class="orphan-explainer">${explainer}</div>
+      <table class="orphans">${rowsHtml}</table>
+    </div>
+  `;
+}
+
+// Export the orphan rows for a given join as their own xlsx file for follow-up.
+function downloadOrphans(lookupKey) {
+  const rows = lastOrphans[lookupKey];
+  if (!rows || rows.length === 0) return;
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Orphans');
+
+  const today = new Date();
+  const stamp = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const filename = `Orphans_${lookupKey}_${stamp}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  logLine(`Downloaded: ${filename}`, 'ok');
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
 // ============================================================
