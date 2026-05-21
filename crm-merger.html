@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Source-of-Truth Merger v1.0.1 | ECS Brands</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>CRM Source-of-Truth Merger v1.1.0 | ECS Brands</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-js-style/1.2.0/xlsx.bundle.js"></script>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -287,7 +287,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>CRM Source-of-Truth Merger <span class="version">v1.0.1</span></h1>
+    <h1>CRM Source-of-Truth Merger <span class="version">v1.1.0</span></h1>
     <div class="subtitle">Merges Pricing + Products + Regions + Suppliers into one denormalized workbook</div>
   </div>
   <div class="badge">Elite Tools</div>
@@ -385,6 +385,16 @@ const FRONT_COLUMNS = [
                         'Supplier_AddressDisplay',
   'ClientId',
 ];
+
+// The four join-key columns + their highlight colors (Elite palette tints).
+// These are the columns that wire the four CRM sheets together.
+const KEY_COLUMN_HIGHLIGHTS = {
+  'Id':                 'EEEEEE',  // pricing row's own id - very light gray
+  'ProductId':          'D6E4F5',  // light blue
+  'RegionId':           'F0E5C7',  // light gold
+  'SupplierLocationId': 'D6DBE5',  // light navy
+};
+const HEADER_FILL_NAVY = '1B2A4A';
 
 // ============================================================
 // STATE
@@ -569,6 +579,12 @@ function runMerge() {
 
   // Build & download xlsx
   const ws = XLSX.utils.json_to_sheet(outRows, { header: ordered });
+
+  // ---- Apply highlighting to the 4 join-key columns + navy header bar ----
+  applyKeyColumnHighlights(ws, ordered, outRows.length);
+  // Freeze the header row so the column identity stays visible while scrolling
+  ws['!views'] = [{ ySplit: 1, state: 'frozen', topLeftCell: 'A2' }];
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Merged');
 
@@ -580,6 +596,54 @@ function runMerge() {
 
   // Render report
   renderReport(merged.length, ordered.length, joinReport);
+}
+
+// ============================================================
+// COLUMN HIGHLIGHTING
+// ============================================================
+// Paints the 4 join-key columns top-to-bottom in their assigned tint,
+// gives the entire header row the navy bar treatment, and freezes the header.
+function applyKeyColumnHighlights(ws, orderedCols, rowCount) {
+  // Map ordered column index -> highlight color (if any)
+  const colorByColIdx = {};
+  orderedCols.forEach((name, idx) => {
+    if (KEY_COLUMN_HIGHLIGHTS[name]) colorByColIdx[idx] = KEY_COLUMN_HIGHLIGHTS[name];
+  });
+
+  // Header row (row 0 in 0-indexed xlsx address): every header gets navy + white bold
+  for (let c = 0; c < orderedCols.length; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if (!ws[addr]) ws[addr] = { t: 's', v: orderedCols[c] };
+    ws[addr].s = {
+      fill: { patternType: 'solid', fgColor: { rgb: HEADER_FILL_NAVY } },
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      alignment: { vertical: 'center' },
+    };
+  }
+
+  // Override the 4 key-column headers with their tint + navy text (so the column
+  // identity is visible even from the header bar).
+  for (const [colIdxStr, color] of Object.entries(colorByColIdx)) {
+    const c = +colIdxStr;
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    ws[addr].s = {
+      fill: { patternType: 'solid', fgColor: { rgb: color } },
+      font: { bold: true, color: { rgb: HEADER_FILL_NAVY } },
+      alignment: { vertical: 'center' },
+    };
+  }
+
+  // Data rows: fill only the 4 key columns
+  for (const [colIdxStr, color] of Object.entries(colorByColIdx)) {
+    const c = +colIdxStr;
+    for (let r = 1; r <= rowCount; r++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!ws[addr]) continue;  // skip null cells (orphan-region rows have null Region_Id etc, but the FK itself will be populated)
+      ws[addr].s = {
+        fill: { patternType: 'solid', fgColor: { rgb: color } },
+      };
+    }
+  }
 }
 
 // ============================================================
