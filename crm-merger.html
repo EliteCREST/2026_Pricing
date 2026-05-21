@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Source-of-Truth Merger | ECS Brands</title>
+<title>CRM Source-of-Truth Merger v1.0.1 | ECS Brands</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -48,6 +48,15 @@
     text-transform: uppercase;
     letter-spacing: 1.5px;
     font-weight: 700;
+  }
+  .header h1 .version {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    margin-left: 10px;
+    text-transform: none;
+    vertical-align: middle;
   }
   .header .subtitle {
     font-size: 11px;
@@ -278,7 +287,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>CRM Source-of-Truth Merger</h1>
+    <h1>CRM Source-of-Truth Merger <span class="version">v1.0.1</span></h1>
     <div class="subtitle">Merges Pricing + Products + Regions + Suppliers into one denormalized workbook</div>
   </div>
   <div class="badge">Elite Tools</div>
