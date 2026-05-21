@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Source-of-Truth Merger v1.2.1 | ECS Brands</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-js-style/1.2.0/xlsx.bundle.js"></script>
+<title>CRM Source-of-Truth Merger v1.2.2 | ECS Brands</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -287,7 +287,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>CRM Source-of-Truth Merger <span class="version">v1.2.1</span></h1>
+    <h1>CRM Source-of-Truth Merger <span class="version">v1.2.2</span></h1>
     <div class="subtitle">Merges Pricing + Products + Regions + Suppliers into one denormalized workbook</div>
   </div>
   <div class="badge">Elite Tools</div>
@@ -461,6 +461,26 @@ const MANUFACTURER_SHORT_CODES = {
 // STATE
 // ============================================================
 const loaded = { pricing: null, products: null, regions: null, suppliers: null };
+
+// ============================================================
+// CDN HEALTH CHECK
+// ============================================================
+// If the SheetJS bundle didn't load (CDN blocked, offline, wrong URL),
+// show a clear in-page error instead of a cryptic "XLSX is not defined"
+// on every file the user drops. Runs after the page is interactive.
+window.addEventListener('DOMContentLoaded', () => {
+  if (typeof XLSX === 'undefined') {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:#FCF2F2;border:2px solid #B53636;color:#B53636;padding:16px 24px;margin:16px 24px;border-radius:4px;font-weight:700;';
+    banner.innerHTML = 'XLSX library failed to load from CDN. The merger can\'t read or write files until this is resolved. Check your internet connection and reload the page. If the problem persists, the CDN URL in the page source may need to be updated.';
+    document.querySelector('.container').prepend(banner);
+    document.getElementById('btn-merge').disabled = true;
+    document.querySelectorAll('.dropzone').forEach(z => {
+      z.style.pointerEvents = 'none';
+      z.style.opacity = '0.5';
+    });
+  }
+});
 
 // ============================================================
 // UI WIRING
