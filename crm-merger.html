@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Source-of-Truth Merger v1.1.0 | ECS Brands</title>
+<title>CRM Source-of-Truth Merger v1.2.1 | ECS Brands</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-js-style/1.2.0/xlsx.bundle.js"></script>
 <style>
   :root {
@@ -287,7 +287,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>CRM Source-of-Truth Merger <span class="version">v1.1.0</span></h1>
+    <h1>CRM Source-of-Truth Merger <span class="version">v1.2.1</span></h1>
     <div class="subtitle">Merges Pricing + Products + Regions + Suppliers into one denormalized workbook</div>
   </div>
   <div class="badge">Elite Tools</div>
@@ -395,6 +395,67 @@ const KEY_COLUMN_HIGHLIGHTS = {
   'SupplierLocationId': 'D6DBE5',  // light navy
 };
 const HEADER_FILL_NAVY = '1B2A4A';
+
+// Manufacturer short-code mapping (applied to Product_Manufacturer after the join).
+// Source of truth: Angel's manual cleanup, May 2026. Add new entries here as the
+// CRM grows. Original full-name strings are left as-is if not in this map.
+// Casing variants like 'CertainTeed' vs 'Certainteed' are intentionally consolidated.
+const MANUFACTURER_SHORT_CODES = {
+  'ACM':                            'ACM',
+  'APOC':                           'APOC',
+  'Airvent':                        'AIR',
+  'American Construction Metals':   'ACM',
+  'Benjamin Obdyke':                'BEN',
+  'Broan':                          'GEN',
+  'CMG':                            'CMG',
+  'CertainTeed':                    'CT',
+  'Certainteed':                    'CT',
+  'Duo-Fast':                       'GEN',
+  'Exterior Portfolio':             'EP',
+  'Firestone':                      'FS',
+  'Flamco':                         'FLA',
+  'GAF':                            'GAF',
+  'Generic':                        'GEN',
+  'generic':                        'GEN',
+  'Geocel':                         'GEO',
+  'Grace':                          'GRC',
+  'IKO':                            'IKO',
+  'InOvate':                        'INO',
+  'Inovate':                        'INO',
+  'James Hardie':                   'HAR',
+  'Kingspan':                       'KS',
+  'Klauer':                         'KLA',
+  'LP':                             'LP',
+  'LP, Louisiana Pacific':          'LP',
+  'Lifetime':                       'GEN',
+  'Lomanco':                        'LOM',
+  'MSA':                            'MSA',
+  'Mid America':                    'MID',
+  'Mid America Bldg':               'MID',
+  'Mule-Hide':                      'MH',
+  'NPC':                            'NPC',
+  'Norandex':                       'NDX',
+  'OSI':                            'OSI',
+  'Owens Corning':                  'OC',
+  'Phillips':                       'PHI',
+  'Phillips Manufacturing':         'PHI',
+  'Polar Industries Incorporated':  'PLR',
+  'Polyglass':                      'POL',
+  'Protecto':                       'PRO',
+  'QAP':                            'QAP',
+  'Quality Edge':                   'QE',
+  'Quarrix':                        'QX',
+  'Royal':                          'ROY',
+  'Royal Building Products':        'ROY',
+  'Stinger':                        'GEN',
+  'Tamco':                          'TAM',
+  'Top Shield':                     'TS',
+  'TopShield':                      'TS',
+  'Tri Built':                      'TRI',
+  'Tyvek':                          'TYV',
+  'Velux':                          'VLX',
+  'Versico':                        'VER',
+};
 
 // ============================================================
 // STATE
@@ -557,6 +618,55 @@ function runMerge() {
     const pct = (100 * (1 - unmatched / merged.length)).toFixed(1);
     const tag = unmatched === 0 ? 'ok' : 'warn';
     logLine(`Joined ${spec.lookup.padEnd(10)} -> ${pct}% matched, ${unmatched.toLocaleString()} orphan rows`, tag);
+  }
+
+  // ---- Apply manufacturer short-code mapping ----
+  // Three-tier logic:
+  //   1. If source manufacturer matches the short-code map, use the mapped value
+  //      (e.g. "CertainTeed" -> "CT", "Royal Building Products" -> "ROY").
+  //   2. If source manufacturer is null/blank, fall back to description-based rules:
+  //        - description contains "Resisto"   -> "RES"   (checked first, wins ties)
+  //        - description contains "Everguard" -> "EVR"
+  //        - everything else                  -> "GEN"   (default for unknowns)
+  //   3. If the source manufacturer is non-null but not in the map, leave it as-is
+  //      (logged as "unmapped" for review).
+  //
+  // The description rules ONLY fire when manufacturer is blank — products that
+  // already have a real manufacturer like "GAF" keep it even if their description
+  // mentions "Everguard" (there are 24 such GAF-Everguard products in the data).
+  let mappedCount = 0;
+  let descEvrCount = 0;
+  let descResCount = 0;
+  let defaultGenCount = 0;
+  const unmappedNames = new Map();  // name -> row count
+  for (const row of merged) {
+    const orig = row['Product_Manufacturer'];
+    const isBlank = (orig == null || orig === '');
+
+    if (!isBlank && MANUFACTURER_SHORT_CODES.hasOwnProperty(orig)) {
+      row['Product_Manufacturer'] = MANUFACTURER_SHORT_CODES[orig];
+      mappedCount++;
+    } else if (isBlank) {
+      // Description-based override, then GEN as final fallback
+      const desc = (row['Product_Description'] || '').toString().toLowerCase();
+      if (desc.indexOf('resisto') !== -1) {
+        row['Product_Manufacturer'] = 'RES';
+        descResCount++;
+      } else if (desc.indexOf('everguard') !== -1) {
+        row['Product_Manufacturer'] = 'EVR';
+        descEvrCount++;
+      } else {
+        row['Product_Manufacturer'] = 'GEN';
+        defaultGenCount++;
+      }
+    } else {
+      // Non-blank but not in the map — leave value as-is and flag for review
+      unmappedNames.set(orig, (unmappedNames.get(orig) || 0) + 1);
+    }
+  }
+  logLine(`Manufacturer short codes applied: ${mappedCount.toLocaleString()} mapped, ${descResCount.toLocaleString()} RES (Resisto), ${descEvrCount.toLocaleString()} EVR (Everguard), ${defaultGenCount.toLocaleString()} GEN (default)`, 'ok');
+  if (unmappedNames.size > 0) {
+    logLine(`Unmapped manufacturer names (left as-is): ${[...unmappedNames.entries()].map(([n,c])=>`"${n}" (${c})`).join(', ')}`, 'warn');
   }
 
   // Rectangularize: collect all columns across all rows, then reorder.
