@@ -416,10 +416,13 @@ function handleFile(key, file) {
   const zone = document.querySelector(`.dropzone[data-key="${key}"]`);
   const status = document.getElementById(`status-${key}`);
 
-  // Validate filename prefix to catch wrong-slot drops early
-  const expected = FILE_PATTERNS[key].toLowerCase();
-  const actual = file.name.toLowerCase();
-  if (!actual.startsWith(expected.toLowerCase())) {
+  // Validate filename prefix to catch wrong-slot drops early.
+  // Normalize spaces, underscores, and hyphens to all equal each other,
+  // so "Product List 5-20-26.xlsx" matches the "Product_List" pattern.
+  const normalize = s => s.toLowerCase().replace(/[\s_\-]+/g, '_');
+  const expected = normalize(FILE_PATTERNS[key]);
+  const actual = normalize(file.name);
+  if (!actual.startsWith(expected)) {
     zone.classList.remove('loaded');
     zone.classList.add('error');
     status.className = 'dz-status error';
