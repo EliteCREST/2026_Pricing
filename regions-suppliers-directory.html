@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v2.0.0 | ECS Brands</title>
+<title>Regions & Suppliers Directory v2.0.1 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -383,7 +383,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v2.0.0</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v2.0.1</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="badge">Elite Tools</div>
@@ -582,7 +582,6 @@ for (const rel of APP_DATA.relationships) {
 }
 
 // Add unused suppliers (those not referenced by any region)
-const usedSupplierIds = new Set(APP_DATA.relationships.map(r => r.supplier_id));
 for (const [sid, s] of Object.entries(APP_DATA.suppliers)) {
   if (!usedSupplierIds.has(sid)) {
     ROWS.push({
@@ -900,7 +899,7 @@ async function fetchData() {
   const refreshBtn = document.getElementById('refresh-btn');
   const statusEl = document.getElementById('backend-status');
 
-  if (BACKEND_URL === 'https://script.google.com/macros/s/AKfycbwzXO8Sj3eSTv4VqU60Kk8tQsrYYws_-iNktXA5pIn_-B2rAtky-tSPep04C-V4-s48/exec') {
+  if (!BACKEND_URL || BACKEND_URL.indexOf('PASTE_YOUR') === 0 || BACKEND_URL.indexOf('script.google.com') === -1) {
     statusEl.innerHTML = '<span style="color:var(--red);font-weight:700;">Configuration needed:</span> set BACKEND_URL in the page source to your Apps Script /exec URL.';
     return;
   }
