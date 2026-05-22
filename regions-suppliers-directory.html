@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.0.0 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.0.1 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -711,7 +711,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.0.0</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.0.1</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -1439,6 +1439,8 @@ function togglePricingRow(tr, row) {
   detailTr.appendChild(detailTd);
   tr.parentNode.insertBefore(detailTr, tr.nextSibling);
 }
+
+function renderHeader() {
   const tr = document.getElementById('grid-header');
   tr.innerHTML = '';
   for (const col of activeColumns()) {
