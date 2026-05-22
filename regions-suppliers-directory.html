@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v2.0.1 | ECS Brands</title>
+<title>Regions & Suppliers Directory v2.1.0 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -70,6 +70,67 @@
     letter-spacing: 1px;
     border-radius: 2px;
   }
+
+  /* Settings menu in header */
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .settings-wrap { position: relative; }
+  .settings-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 6px 12px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .settings-btn:hover { background: rgba(255,255,255,0.1); }
+  .settings-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    min-width: 280px;
+    z-index: 50;
+    display: none;
+  }
+  .settings-menu.shown { display: block; }
+  .settings-menu-header {
+    background: var(--navy);
+    color: white;
+    padding: 8px 14px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid var(--gold);
+  }
+  .settings-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    color: var(--navy);
+    text-decoration: none;
+    font-size: 12px;
+    border-bottom: 1px solid #F1F4F9;
+  }
+  .settings-menu a:last-child { border-bottom: none; }
+  .settings-menu a:hover { background: var(--light-blue-bg); }
+  .settings-menu .icon { font-size: 16px; }
+  .settings-menu .label-main { display: flex; flex-direction: column; gap: 2px; }
+  .settings-menu .label-sub { font-size: 10px; color: var(--text-muted); text-transform: none; letter-spacing: 0; }
 
   /* ---------- MAIN ---------- */
   .container {
@@ -383,10 +444,27 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v2.0.1</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v2.1.0</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
-  <div class="badge">Elite Tools</div>
+  <div class="header-actions">
+    <div class="settings-wrap">
+      <button class="settings-btn" id="settings-toggle" aria-haspopup="true" aria-expanded="false">
+        <span>⚙</span><span>Settings</span>
+      </button>
+      <div class="settings-menu" id="settings-menu">
+        <div class="settings-menu-header">Data Sources</div>
+        <a href="https://docs.google.com/spreadsheets/d/1CGMd2UAchz43QoZrwu93dosPgl7FZOCWnWOiwk24OQ4/edit" target="_blank" rel="noopener">
+          <span class="icon">📊</span>
+          <span class="label-main">
+            <span>Source Google Sheet</span>
+            <span class="label-sub">Regions &amp; Suppliers data (edit here)</span>
+          </span>
+        </a>
+      </div>
+    </div>
+    <div class="badge">Elite Tools</div>
+  </div>
 </div>
 
 <div class="container">
@@ -891,6 +969,29 @@ document.getElementById('stat-unused').addEventListener('click', () => {
 document.getElementById('stat-regions').addEventListener('click', clearAll);
 document.getElementById('stat-suppliers').addEventListener('click', clearAll);
 document.getElementById('stat-relationships').addEventListener('click', clearAll);
+
+// Settings menu toggle
+(function() {
+  const btn = document.getElementById('settings-toggle');
+  const menu = document.getElementById('settings-menu');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const shown = menu.classList.toggle('shown');
+    btn.setAttribute('aria-expanded', shown ? 'true' : 'false');
+  });
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target) && e.target !== btn) {
+      menu.classList.remove('shown');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      menu.classList.remove('shown');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+})();
 
 // ============================================================
 // FETCH FROM BACKEND
