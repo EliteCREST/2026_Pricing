@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.0.1 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.2.0 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -646,6 +646,39 @@
   }
   .price-num { font-variant-numeric: tabular-nums; }
 
+  /* Ghost-region rows in pricing view: pricing references a region/supplier
+     that doesn't exist in its corresponding sheet. Tint amber so it stands out. */
+  tr.row.ghost-region td,
+  tr.row.ghost-supplier td {
+    background: #FBF1DD;
+  }
+  tr.row.ghost-region:hover td,
+  tr.row.ghost-supplier:hover td {
+    background: #F8E7C0;
+  }
+  tr.row.ghost-region td:first-child,
+  tr.row.ghost-supplier td:first-child {
+    border-left: 3px solid var(--amber);
+  }
+  .ghost-label {
+    color: var(--amber);
+    font-style: italic;
+    font-weight: 700;
+  }
+  .badge-ghost {
+    display: inline-block;
+    background: var(--amber);
+    color: white;
+    padding: 1px 7px;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
   /* Orphan banner */
   .orphan-banner {
     background: #FCF2F2;
@@ -711,7 +744,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.0.1</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.2.0</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -747,6 +780,7 @@
     <button class="main-tab" data-tab="regions" role="tab">Regions <span class="count" id="tab-count-regions">0</span></button>
     <button class="main-tab" data-tab="suppliers" role="tab">Suppliers <span class="count" id="tab-count-suppliers">0</span></button>
     <button class="main-tab" data-tab="relationships" role="tab">Relationships <span class="count" id="tab-count-relationships">0</span></button>
+    <button class="main-tab" data-tab="products" role="tab">Products <span class="count" id="tab-count-products">0</span></button>
     <button class="main-tab" data-tab="pricing" role="tab">Pricing <span class="count" id="tab-count-pricing">0</span></button>
     <button class="main-tab warn" data-tab="unused" role="tab">Unused <span class="count" id="tab-count-unused">0</span></button>
   </div>
@@ -929,6 +963,18 @@ const COLUMNS_BY_VIEW = {
     { key: 'price_avg',           label: 'Avg Price' },
     { key: 'uoms_used',           label: 'UOMs' },
   ],
+  products: [
+    { key: 'product_description', label: 'Description' },
+    { key: 'product_manufacturer',label: 'Brand' },
+    { key: 'product_product_line',label: 'Product Line' },
+    { key: 'product_color',       label: 'Color' },
+    { key: 'product_size',        label: 'Size' },
+    { key: 'product_uom',         label: 'UOM' },
+    { key: 'price_count',         label: 'Prices on File' },
+    { key: 'region_count',        label: 'Regions' },
+    { key: 'supplier_count',      label: 'Suppliers' },
+    { key: 'price_range',         label: 'Price Range' },
+  ],
 };
 
 // Default sort per view -- relationships sorts by region, regions/suppliers by name,
@@ -939,6 +985,7 @@ const DEFAULT_SORT_BY_VIEW = {
   suppliers:     'supplier_name',
   unused:        'supplier_name',
   pricing:       'price_count',
+  products:      'product_description',
 };
 const DEFAULT_SORT_ASC_BY_VIEW = {
   pricing: false,  // big counts first
@@ -995,8 +1042,10 @@ function buildRows() {
   // Index regions and suppliers by Id
   const regionsById = {};
   const suppliersById = {};
+  const productsById = {};
   for (const r of (APP_DATA.regions_raw   || [])) { if (r && r.Id) regionsById[r.Id]   = r; }
   for (const s of (APP_DATA.suppliers_raw || [])) { if (s && s.Id) suppliersById[s.Id] = s; }
+  for (const p of (APP_DATA.products_raw  || [])) { if (p && p.Id) productsById[p.Id]  = p; }
 
   // Build relationships list from each region's SupplierLocationIds (JSON array)
   const relationships = [];
@@ -1013,6 +1062,7 @@ function buildRows() {
   }
   APP_DATA.regions = regionsById;
   APP_DATA.suppliers = suppliersById;
+  APP_DATA.products = productsById;
   APP_DATA.relationships = relationships;
   usedSupplierIds = new Set(relationships.map(r => r.supplier_id));
 
@@ -1027,24 +1077,50 @@ function buildRows() {
   // ---- Pricing aggregation ----
   // Bucket pricing rows by (regionId, supplierId) for the Pricing view.
   // Each bucket carries the row list + stats (min/max/avg, unique products, UOMs).
-  // Rows whose RegionId doesn't exist in Regions are captured separately as orphans.
+  // Rows whose RegionId doesn't exist in Regions are STILL bucketed (so they show
+  // up in the table) but flagged as ghost regions so they're visually distinct.
   pricingByPair = {};
   pricingOrphans = [];
   const pricingPerRegion = {};
   const pricingPerSupplier = {};
+  const pricingPerProduct = {};   // productId -> { count, regions:Set, suppliers:Set, priceMin, priceMax, rows:[] }
+  const ghostRegionIds = new Set();
+  const ghostSupplierIds = new Set();
 
   for (const p of (APP_DATA.pricing_raw || [])) {
     if (!p) continue;
-    const rid = p.RegionId, sid = p.SupplierLocationId;
+    const rid = p.RegionId, sid = p.SupplierLocationId, pid = p.ProductId;
     if (!rid || !sid) continue;
-    if (!regionsById[rid]) {
-      pricingOrphans.push(p);
-      continue;
-    }
-    if (!suppliersById[sid]) continue;
 
-    pricingPerRegion[rid]   = (pricingPerRegion[rid]   || 0) + 1;
-    pricingPerSupplier[sid] = (pricingPerSupplier[sid] || 0) + 1;
+    const regionMissing   = !regionsById[rid];
+    const supplierMissing = !suppliersById[sid];
+    if (regionMissing)   { ghostRegionIds.add(rid);   pricingOrphans.push(p); }
+    if (supplierMissing) { ghostSupplierIds.add(sid); }
+
+    // Only increment the "real" per-entity counts when the entity actually exists,
+    // otherwise the regions/suppliers views would show counts attached to nothing.
+    if (!regionMissing)   pricingPerRegion[rid]   = (pricingPerRegion[rid]   || 0) + 1;
+    if (!supplierMissing) pricingPerSupplier[sid] = (pricingPerSupplier[sid] || 0) + 1;
+
+    // Per-product aggregation -- powers the Products view's "prices on file" + range
+    if (pid) {
+      if (!pricingPerProduct[pid]) {
+        pricingPerProduct[pid] = {
+          count: 0, regions: new Set(), suppliers: new Set(),
+          priceMin: Infinity, priceMax: -Infinity, rows: [],
+        };
+      }
+      const pa = pricingPerProduct[pid];
+      pa.count++;
+      pa.regions.add(rid);
+      pa.suppliers.add(sid);
+      pa.rows.push(p);
+      const price = Number(p.Price);
+      if (!isNaN(price)) {
+        if (price < pa.priceMin) pa.priceMin = price;
+        if (price > pa.priceMax) pa.priceMax = price;
+      }
+    }
 
     const key = rid + '|' + sid;
     if (!pricingByPair[key]) {
@@ -1052,6 +1128,7 @@ function buildRows() {
         regionId: rid, supplierId: sid,
         rows: [], priceSum: 0, priceMin: Infinity, priceMax: -Infinity,
         productSet: new Set(), uomSet: new Set(),
+        regionMissing, supplierMissing,
       };
     }
     const bucket = pricingByPair[key];
@@ -1128,17 +1205,21 @@ function buildRows() {
   ROWS_BY_VIEW.unused = ROWS_BY_VIEW.suppliers.filter(row => row._unused);
 
   // ---- pricing view: one row per (region, supplier) pricing group ----
+  // Includes ghost-region groups (RegionId not in Regions sheet) so they're
+  // visible for cleanup rather than hidden.
   ROWS_BY_VIEW.pricing = Object.values(pricingByPair).map(bucket => {
     const r = regionsById[bucket.regionId] || {};
     const s = suppliersById[bucket.supplierId] || {};
     const count = bucket.rows.length;
     const avg = count > 0 ? bucket.priceSum / count : 0;
+    // Friendly label for ghost regions: short GUID suffix in italics
+    const ghostLabel = id => '(Ghost Region — ID: ' + String(id).slice(0, 8) + '\u2026)';
     return {
       pair_key:            bucket.regionId + '|' + bucket.supplierId,
       region_id:           bucket.regionId,
       supplier_id:         bucket.supplierId,
-      region_name:         pickField(r, 'Name'),
-      supplier_name:       pickField(s, 'Name'),
+      region_name:         bucket.regionMissing ? ghostLabel(bucket.regionId) : pickField(r, 'Name'),
+      supplier_name:       bucket.supplierMissing ? '(Ghost Supplier — ID: ' + String(bucket.supplierId).slice(0,8) + '\u2026)' : pickField(s, 'Name'),
       supplier_city_state: [pickField(s, 'City'), pickField(s, 'State')].filter(Boolean).join(', '),
       price_count:         count,
       unique_products:     bucket.productSet.size,
@@ -1147,8 +1228,35 @@ function buildRows() {
       price_avg:           count > 0 ? '$' + avg.toFixed(2) : '',
       uoms_used:           Array.from(bucket.uomSet).sort().join(', '),
       _pricing_rows:       bucket.rows,
-      _region:             r,
-      _supplier:           s,
+      _region:             bucket.regionMissing ? null : r,
+      _supplier:           bucket.supplierMissing ? null : s,
+      _ghost_region:       bucket.regionMissing,
+      _ghost_supplier:     bucket.supplierMissing,
+    };
+  });
+
+  // ---- products view: one row per product ----
+  ROWS_BY_VIEW.products = Object.values(productsById).map(p => {
+    const pa = pricingPerProduct[p.Id];
+    const priceRange = pa && pa.priceMin !== Infinity
+      ? (pa.priceMin === pa.priceMax
+          ? '$' + pa.priceMin.toFixed(2)
+          : '$' + pa.priceMin.toFixed(2) + ' \u2013 $' + pa.priceMax.toFixed(2))
+      : '';
+    return {
+      product_id:           p.Id,
+      product_description:  pickField(p, 'Description'),
+      product_manufacturer: pickField(p, 'Manufacturer'),
+      product_product_line: pickField(p, 'ProductLine'),
+      product_color:        pickField(p, 'Color'),
+      product_size:         pickField(p, 'Size'),
+      product_uom:          pickField(p, 'Uom'),
+      price_count:          pa ? pa.count : 0,
+      region_count:         pa ? pa.regions.size : 0,
+      supplier_count:       pa ? pa.suppliers.size : 0,
+      price_range:          priceRange,
+      _product:             p,
+      _pricing_rows:        pa ? pa.rows : [],
     };
   });
 
@@ -1156,7 +1264,28 @@ function buildRows() {
   for (const view in ROWS_BY_VIEW) {
     const cols = COLUMNS_BY_VIEW[view];
     for (const row of ROWS_BY_VIEW[view]) {
-      row._search = cols.map(c => row[c.key] == null ? '' : String(row[c.key])).join(' \u0000 ').toLowerCase();
+      let blob = cols.map(c => row[c.key] == null ? '' : String(row[c.key])).join(' \u0000 ').toLowerCase();
+      // Enrich pricing rows with the product descriptions and brands of products in the group
+      // so searches like "IKO Dynasty" actually find pricing groups that contain those products.
+      if (view === 'pricing' && row._pricing_rows && row._pricing_rows.length) {
+        const productSnippets = [];
+        const seen = new Set();
+        for (const pr of row._pricing_rows) {
+          const pid = pr.ProductId;
+          if (!pid || seen.has(pid)) continue;
+          seen.add(pid);
+          const prod = productsById[pid];
+          if (prod) {
+            productSnippets.push(String(prod.Description || ''));
+            productSnippets.push(String(prod.Manufacturer || ''));
+            productSnippets.push(String(prod.ProductLine || ''));
+          }
+        }
+        if (productSnippets.length) {
+          blob += ' \u0000 ' + productSnippets.join(' ').toLowerCase();
+        }
+      }
+      row._search = blob;
     }
   }
 } // end buildRows
@@ -1166,7 +1295,7 @@ function buildRows() {
 // ============================================================
 let mainTab = 'overview';     // 'overview' | 'regions' | 'suppliers' | 'relationships' | 'pricing' | 'unused'
 let viewMode = 'relationships';   // which data shape the data pane shows
-let ROWS_BY_VIEW = { relationships: [], regions: [], suppliers: [], unused: [], pricing: [] };
+let ROWS_BY_VIEW = { relationships: [], regions: [], suppliers: [], unused: [], pricing: [], products: [] };
 let pricingByPair = {};       // "regionId|supplierId" -> { rows: [], stats: {} }
 let pricingOrphans = [];      // pricing rows whose RegionId isn't in Regions sheet
 let searchTerm = '';
@@ -1199,6 +1328,7 @@ function renderStats() {
   document.getElementById('tab-count-relationships').textContent = relCount.toLocaleString();
   document.getElementById('tab-count-pricing').textContent       = pricingPairCount.toLocaleString();
   document.getElementById('tab-count-unused').textContent        = unusedCount.toLocaleString();
+  document.getElementById('tab-count-products').textContent      = ROWS_BY_VIEW.products.length.toLocaleString();
 }
 
 // ============================================================
@@ -1289,7 +1419,7 @@ function renderIssuesPanel() {
       cls: 'red',
       icon: '!',
       title: `${pricingOrphans.length.toLocaleString()} pricing rows reference regions that don't exist`,
-      detail: `${orphanRegionIds.size} distinct RegionId values in pricing are missing from the Regions tab. Likely deleted or archived regions that still have live pricing attached.`,
+      detail: `${orphanRegionIds.size} distinct RegionId values in pricing are missing from the Regions tab. Tagged as "ghost regions" in the Pricing view so you can find them. Likely deleted or archived regions that still have live pricing attached.`,
       actionLabel: 'View',
       onAction: () => switchMainTab('pricing'),
     });
@@ -1381,14 +1511,151 @@ function renderOrphanBanner() {
   const distinctRegions = new Set(pricingOrphans.map(p => p.RegionId)).size;
   const banner = document.createElement('div');
   banner.className = 'orphan-banner';
+  banner.style.borderColor = 'var(--amber)';
+  banner.style.borderLeftColor = 'var(--amber)';
+  banner.style.background = '#FBF1DD';
   banner.innerHTML = `
-    <div class="icon">\u26A0</div>
+    <div class="icon" style="color:var(--amber);">\u26A0</div>
     <div class="text">
-      <div class="title">Orphaned pricing data found</div>
-      <div class="detail">${pricingOrphans.length.toLocaleString()} pricing rows reference ${distinctRegions} RegionId${distinctRegions === 1 ? '' : 's'} that don't exist in the Regions sheet. These rows are <strong>excluded</strong> from the groups below.</div>
+      <div class="title" style="color:var(--amber);">Ghost regions detected in pricing</div>
+      <div class="detail">${pricingOrphans.length.toLocaleString()} pricing rows reference ${distinctRegions} RegionId${distinctRegions === 1 ? '' : 's'} that don't exist in the Regions sheet. These groups are <strong>shown below</strong>, highlighted in amber and tagged with a <strong>GHOST</strong> badge so you can find them for cleanup.</div>
     </div>
   `;
   host.appendChild(banner);
+}
+
+// Toggle expansion of a product row to show every price across all regions/suppliers.
+// This is the "report" view -- includes ProductId, RegionId, SupplierLocationId so
+// the user can copy the data into other systems if needed.
+function toggleProductRow(tr, row) {
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains('pricing-detail-row')) {
+    next.remove();
+    tr.classList.remove('expanded');
+    return;
+  }
+  tr.classList.add('expanded');
+  const detailTr = document.createElement('tr');
+  detailTr.className = 'pricing-detail-row';
+  const detailTd = document.createElement('td');
+  detailTd.colSpan = activeColumns().length;
+
+  const rows = row._pricing_rows || [];
+  if (rows.length === 0) {
+    detailTd.innerHTML = `
+      <div class="pricing-detail-inner" style="color:var(--text-muted);font-size:12px;">
+        No pricing rows on file for this product.
+      </div>`;
+    detailTr.appendChild(detailTd);
+    tr.parentNode.insertBefore(detailTr, tr.nextSibling);
+    return;
+  }
+
+  // Sort by region name then supplier name for readability
+  const sorted = rows.slice().sort((a, b) => {
+    const ar = (APP_DATA.regions[a.RegionId] && APP_DATA.regions[a.RegionId].Name) || '';
+    const br = (APP_DATA.regions[b.RegionId] && APP_DATA.regions[b.RegionId].Name) || '';
+    if (ar !== br) return ar < br ? -1 : 1;
+    const as = (APP_DATA.suppliers[a.SupplierLocationId] && APP_DATA.suppliers[a.SupplierLocationId].Name) || '';
+    const bs = (APP_DATA.suppliers[b.SupplierLocationId] && APP_DATA.suppliers[b.SupplierLocationId].Name) || '';
+    return as < bs ? -1 : as > bs ? 1 : 0;
+  });
+
+  const cap = 500;
+  const showRows = sorted.slice(0, cap);
+  const truncated = sorted.length > cap;
+
+  let html = `
+    <div class="pricing-detail-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--text-muted);">
+          Showing <strong>${showRows.length.toLocaleString()}</strong> of <strong>${rows.length.toLocaleString()}</strong> price${rows.length === 1 ? '' : 's'} for this product${truncated ? ' (capped at ' + cap + ')' : ''}
+        </div>
+        <button class="issue-action" data-export-product="${escapeHtml(row.product_id)}">Copy as TSV</button>
+      </div>
+      <table class="pricing-detail-table">
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th>Supplier</th>
+            <th class="num">Price</th>
+            <th>UOM</th>
+            <th>ProductId</th>
+            <th>RegionId</th>
+            <th>SupplierLocationId</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  for (const p of showRows) {
+    const reg = APP_DATA.regions[p.RegionId];
+    const sup = APP_DATA.suppliers[p.SupplierLocationId];
+    const regName = reg ? reg.Name : '(Ghost: ' + String(p.RegionId).slice(0,8) + '\u2026)';
+    const supName = sup ? sup.Name : '(Ghost: ' + String(p.SupplierLocationId).slice(0,8) + '\u2026)';
+    const price = p.Price != null ? '$' + Number(p.Price).toFixed(2) : '';
+    const regClass = reg ? '' : ' style="color:var(--amber);font-style:italic;"';
+    const supClass = sup ? '' : ' style="color:var(--amber);font-style:italic;"';
+    html += `
+      <tr>
+        <td${regClass}>${escapeHtml(regName)}</td>
+        <td${supClass}>${escapeHtml(supName)}</td>
+        <td class="num price-num">${price}</td>
+        <td>${escapeHtml(p.Uom || '')}</td>
+        <td>${escapeHtml(p.ProductId || '')}</td>
+        <td>${escapeHtml(p.RegionId || '')}</td>
+        <td>${escapeHtml(p.SupplierLocationId || '')}</td>
+      </tr>
+    `;
+  }
+  html += `</tbody></table></div>`;
+  detailTd.innerHTML = html;
+  detailTr.appendChild(detailTd);
+  tr.parentNode.insertBefore(detailTr, tr.nextSibling);
+
+  // Wire the "Copy as TSV" button to copy the full (uncapped) report to clipboard
+  const btn = detailTd.querySelector('[data-export-product]');
+  if (btn) {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      copyProductReportAsTSV(row, sorted, btn);
+    });
+  }
+}
+
+// Build a tab-separated string of the product's full pricing report and copy it.
+// Tab-separated paste cleanly into Sheets/Excel.
+function copyProductReportAsTSV(row, sorted, btn) {
+  const headers = ['Product Description','Brand','Region','Supplier','Price','UOM','ProductId','RegionId','SupplierLocationId'];
+  const lines = [headers.join('\t')];
+  for (const p of sorted) {
+    const reg = APP_DATA.regions[p.RegionId];
+    const sup = APP_DATA.suppliers[p.SupplierLocationId];
+    const regName = reg ? reg.Name : '(Ghost: ' + p.RegionId + ')';
+    const supName = sup ? sup.Name : '(Ghost: ' + p.SupplierLocationId + ')';
+    const price = p.Price != null ? Number(p.Price).toFixed(2) : '';
+    lines.push([
+      row.product_description, row.product_manufacturer,
+      regName, supName, price, p.Uom || '',
+      p.ProductId || '', p.RegionId || '', p.SupplierLocationId || '',
+    ].map(v => String(v || '').replace(/\t/g, ' ').replace(/\n/g, ' ')).join('\t'));
+  }
+  const tsv = lines.join('\n');
+  navigator.clipboard.writeText(tsv).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.background = 'var(--green)';
+    btn.style.color = 'white';
+    btn.style.borderColor = 'var(--green)';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 1500);
+  }).catch(err => {
+    btn.textContent = 'Copy failed';
+    setTimeout(() => { btn.textContent = 'Copy as TSV'; }, 1500);
+  });
 }
 
 // Toggle expansion of a pricing group row to show individual prices
@@ -1414,7 +1681,7 @@ function togglePricingRow(tr, row) {
       <table class="pricing-detail-table">
         <thead>
           <tr>
-            <th>ProductId</th>
+            <th>Product</th>
             <th>UOM</th>
             <th class="num">Price</th>
             <th>Updated</th>
@@ -1425,9 +1692,14 @@ function togglePricingRow(tr, row) {
   for (const p of showRows) {
     const updated = p.UpdatedAt ? new Date(p.UpdatedAt).toLocaleDateString() : '';
     const price = p.Price != null ? '$' + Number(p.Price).toFixed(2) : '';
+    // Look up product name if Products tab is loaded; fall back to GUID otherwise
+    const prod = APP_DATA.products ? APP_DATA.products[p.ProductId] : null;
+    const productLabel = prod
+      ? escapeHtml(prod.Description || prod.Manufacturer || p.ProductId)
+      : `<span style="font-family:'Consolas','Courier New',monospace;color:var(--text-muted);">${escapeHtml(p.ProductId || '')}</span>`;
     detailHtml += `
       <tr>
-        <td>${escapeHtml(p.ProductId || '')}</td>
+        <td>${productLabel}</td>
         <td>${escapeHtml(p.Uom || '')}</td>
         <td class="num price-num">${price}</td>
         <td>${updated}</td>
@@ -1527,15 +1799,19 @@ function renderTable() {
     tbody.appendChild(tr);
   } else {
     const cols = activeColumns();
+    const expandableView = (viewMode === 'pricing' || viewMode === 'products');
     for (const row of filtered) {
       const tr = document.createElement('tr');
-      tr.className = 'row' + (row._unused ? ' unused' : '') + (viewMode === 'pricing' ? ' pricing-group-row' : '');
+      tr.className = 'row' + (row._unused ? ' unused' : '')
+        + (expandableView ? ' pricing-group-row' : '')
+        + (row._ghost_region ? ' ghost-region' : '')
+        + (row._ghost_supplier ? ' ghost-supplier' : '');
       let firstCellRendered = false;
       for (const col of cols) {
         const td = document.createElement('td');
         const val = row[col.key] == null ? '' : row[col.key];
-        // Add an expand caret to the first cell of pricing-view rows so users see it's expandable
-        if (viewMode === 'pricing' && !firstCellRendered) {
+        // Add an expand caret to the first cell of expandable-view rows so users see it's expandable
+        if (expandableView && !firstCellRendered) {
           const caret = document.createElement('span');
           caret.className = 'expand-caret';
           caret.textContent = '\u25B6';
@@ -1543,32 +1819,57 @@ function renderTable() {
           firstCellRendered = true;
         }
         if (col.key === 'region_name' && val) {
-          const a = document.createElement('a');
-          a.className = 'clickable col-name';
-          a.textContent = val;
-          a.addEventListener('click', e => {
-            e.stopPropagation();
-            if (viewMode === 'pricing') return;  // in pricing view, name isn't a drill-down link
-            switchMainTab('relationships');
-            setFilter('region', 'Region', val);
-          });
-          td.appendChild(a);
+          if (row._ghost_region) {
+            // Ghost region: render as italic amber text, not as a clickable drill-down link
+            const span = document.createElement('span');
+            span.className = 'ghost-label';
+            span.textContent = val;
+            td.appendChild(span);
+            const badge = document.createElement('span');
+            badge.className = 'badge-ghost';
+            badge.textContent = 'Ghost';
+            badge.title = 'This RegionId appears in pricing but does not exist in the Regions sheet';
+            td.appendChild(badge);
+          } else {
+            const a = document.createElement('a');
+            a.className = 'clickable col-name';
+            a.textContent = val;
+            a.addEventListener('click', e => {
+              e.stopPropagation();
+              if (viewMode === 'pricing') return;  // in pricing view, name isn't a drill-down link
+              switchMainTab('relationships');
+              setFilter('region', 'Region', val);
+            });
+            td.appendChild(a);
+          }
         } else if (col.key === 'supplier_name' && val) {
-          const a = document.createElement('a');
-          a.className = 'clickable col-name';
-          a.textContent = val;
-          a.addEventListener('click', e => {
-            e.stopPropagation();
-            if (viewMode === 'pricing') return;
-            switchMainTab('relationships');
-            setFilter('supplier', 'Supplier', val);
-          });
-          td.appendChild(a);
-          if (row._unused) {
-            const b = document.createElement('span');
-            b.className = 'badge-unused';
-            b.textContent = 'Unused';
-            td.appendChild(b);
+          if (row._ghost_supplier) {
+            const span = document.createElement('span');
+            span.className = 'ghost-label';
+            span.textContent = val;
+            td.appendChild(span);
+            const badge = document.createElement('span');
+            badge.className = 'badge-ghost';
+            badge.textContent = 'Ghost';
+            badge.title = 'This SupplierLocationId appears in pricing but does not exist in the Suppliers sheet';
+            td.appendChild(badge);
+          } else {
+            const a = document.createElement('a');
+            a.className = 'clickable col-name';
+            a.textContent = val;
+            a.addEventListener('click', e => {
+              e.stopPropagation();
+              if (viewMode === 'pricing') return;
+              switchMainTab('relationships');
+              setFilter('supplier', 'Supplier', val);
+            });
+            td.appendChild(a);
+            if (row._unused) {
+              const b = document.createElement('span');
+              b.className = 'badge-unused';
+              b.textContent = 'Unused';
+              td.appendChild(b);
+            }
           }
         } else if (col.key === 'supplier_email' && val) {
           const a = document.createElement('a');
@@ -1594,6 +1895,8 @@ function renderTable() {
       }
       if (viewMode === 'pricing') {
         tr.addEventListener('click', () => togglePricingRow(tr, row));
+      } else if (viewMode === 'products') {
+        tr.addEventListener('click', () => toggleProductRow(tr, row));
       } else {
         tr.addEventListener('click', () => openPanel(row));
       }
@@ -1636,6 +1939,7 @@ const VIEW_LABELS = {
   suppliers:     'Suppliers',
   unused:        'Unused Suppliers',
   pricing:       'Pricing — Region \u2194 Supplier Groups',
+  products:      'Products',
 };
 
 // ============================================================
@@ -1828,15 +2132,16 @@ async function fetchData() {
     const payload = await res.json();
     if (!payload.ok) throw new Error(payload.error || 'Backend returned not-ok');
 
-    // Apps Script returns { tabs: { Regions: [...], Suppliers: [...], Pricing: [...] } }
+    // Apps Script returns { tabs: { Regions: [...], Suppliers: [...], Pricing: [...], Products: [...] } }
     APP_DATA.regions_raw   = (payload.tabs && payload.tabs.Regions)   || [];
     APP_DATA.suppliers_raw = (payload.tabs && payload.tabs.Suppliers) || [];
     APP_DATA.pricing_raw   = (payload.tabs && payload.tabs.Pricing)   || [];
+    APP_DATA.products_raw  = (payload.tabs && payload.tabs.Products)  || [];
 
     // Handle tabs that returned an error object (missing tab)
     if (APP_DATA.regions_raw.error)   { throw new Error('Regions tab: ' + APP_DATA.regions_raw.error); }
     if (APP_DATA.suppliers_raw.error) { throw new Error('Suppliers tab: ' + APP_DATA.suppliers_raw.error); }
-    // Pricing is allowed to be missing or empty -- just produces no pricing rows.
+    // Pricing and Products are allowed to be missing or empty.
 
     lastFetchedAt = new Date(payload.fetchedAt || Date.now());
     buildRows();
@@ -1847,7 +2152,10 @@ async function fetchData() {
     const pricingMsg = APP_DATA.pricing_raw && APP_DATA.pricing_raw.length
       ? `, ${APP_DATA.pricing_raw.length.toLocaleString()} prices`
       : '';
-    statusEl.innerHTML = `<span style="color:var(--green);">&#10003;</span> Loaded ${APP_DATA.regions_raw.length} regions, ${APP_DATA.suppliers_raw.length} suppliers${pricingMsg} at ${lastFetchedAt.toLocaleTimeString()}`;
+    const productsMsg = APP_DATA.products_raw && APP_DATA.products_raw.length
+      ? `, ${APP_DATA.products_raw.length.toLocaleString()} products`
+      : '';
+    statusEl.innerHTML = `<span style="color:var(--green);">&#10003;</span> Loaded ${APP_DATA.regions_raw.length} regions, ${APP_DATA.suppliers_raw.length} suppliers${pricingMsg}${productsMsg} at ${lastFetchedAt.toLocaleTimeString()}`;
   } catch (err) {
     statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;">Failed to load:</span> ${escapeHtml(String(err.message || err))}`;
   } finally {
