@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v2.1.0 | ECS Brands</title>
+<title>Regions & Suppliers Directory v2.2.0 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -158,6 +158,14 @@
   .stat:hover { background: var(--light-blue-bg); }
   .stat.warn { border-left-color: var(--amber); }
   .stat.warn:hover { background: #FBF1DD; }
+  .stat.active-view {
+    background: var(--light-blue-bg);
+    border-left-width: 5px;
+    box-shadow: 0 2px 6px rgba(31,95,173,0.12);
+  }
+  .stat.warn.active-view {
+    background: #FBF1DD;
+  }
   .stat-label {
     font-size: 10px;
     text-transform: uppercase;
@@ -444,7 +452,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v2.1.0</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v2.2.0</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -473,28 +481,33 @@
     <div class="stat" id="stat-regions">
       <div class="stat-label">Regions</div>
       <div class="stat-value" id="stat-regions-count">0</div>
-      <div class="stat-sub">Click to view all</div>
+      <div class="stat-sub">View one row per region</div>
     </div>
     <div class="stat" id="stat-suppliers">
       <div class="stat-label">Suppliers</div>
       <div class="stat-value" id="stat-suppliers-count">0</div>
-      <div class="stat-sub">Click to view all</div>
+      <div class="stat-sub">View one row per supplier</div>
     </div>
     <div class="stat" id="stat-relationships">
       <div class="stat-label">Relationships</div>
       <div class="stat-value" id="stat-relationships-count">0</div>
-      <div class="stat-sub">Region &harr; Supplier pairs</div>
+      <div class="stat-sub">View region \u2194 supplier pairs</div>
     </div>
     <div class="stat warn" id="stat-unused">
       <div class="stat-label">Unused Suppliers</div>
       <div class="stat-value" id="stat-unused-count">0</div>
-      <div class="stat-sub">Click to view</div>
+      <div class="stat-sub">Suppliers no region uses</div>
     </div>
   </div>
 
   <div class="backend-bar" style="background:white;border:1px solid var(--border);border-radius:3px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;font-size:12px;">
     <button id="refresh-btn" style="background:var(--blue);color:white;border:none;padding:7px 16px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-radius:3px;cursor:pointer;">Refresh from Sheet</button>
     <span id="backend-status" style="color:var(--text-muted);flex:1;">Initializing...</span>
+  </div>
+
+  <div class="view-label-bar" style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px;">
+    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Viewing:</div>
+    <div id="view-label" style="font-size:15px;color:var(--navy);font-weight:700;">Region &harr; Supplier Relationships</div>
   </div>
 
   <div class="search-bar">
@@ -543,23 +556,65 @@ const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzXO8Sj3eSTv4VqU60
 // ============================================================
 let APP_DATA = { regions: {}, suppliers: {}, relationships: [] };
 let usedSupplierIds = new Set();
-let ROWS = [];
 let lastFetchedAt = null;
 
 // ============================================================
 // CONFIG -- which fields show in main table vs side panel
 // ============================================================
-const COLUMNS = [
-  { key: 'region_name',         label: 'Region',           type: 'region' },
-  { key: 'region_prefix',       label: 'Job Prefix' },
-  { key: 'region_state',        label: 'Region State' },
-  { key: 'supplier_name',       label: 'Supplier',         type: 'supplier' },
-  { key: 'supplier_city',       label: 'Supplier City' },
-  { key: 'supplier_state',      label: 'Supplier State' },
-  { key: 'supplier_branch',     label: 'Branch' },
-  { key: 'supplier_phone',      label: 'Phone' },
-  { key: 'supplier_email',      label: 'Order Email' },
-];
+// Columns shown per view mode. Each view has a different "shape":
+// - relationships: one row per region-supplier pair (default)
+// - regions:       one row per region, with supplier_count summary
+// - suppliers:     one row per supplier, with region_count summary
+// - unused:        one row per supplier with no region using it
+const COLUMNS_BY_VIEW = {
+  relationships: [
+    { key: 'region_name',         label: 'Region' },
+    { key: 'region_prefix',       label: 'Job Prefix' },
+    { key: 'region_state',        label: 'Region State' },
+    { key: 'supplier_name',       label: 'Supplier' },
+    { key: 'supplier_city',       label: 'Supplier City' },
+    { key: 'supplier_state',      label: 'Supplier State' },
+    { key: 'supplier_branch',     label: 'Branch' },
+    { key: 'supplier_phone',      label: 'Phone' },
+    { key: 'supplier_email',      label: 'Order Email' },
+  ],
+  regions: [
+    { key: 'region_name',         label: 'Region' },
+    { key: 'region_prefix',       label: 'Job Prefix' },
+    { key: 'region_state',        label: 'State' },
+    { key: 'region_address',      label: 'Address' },
+    { key: 'region_sales_tax',    label: 'Sales Tax' },
+    { key: 'supplier_count',      label: 'Suppliers' },
+    { key: 'region_is_archived',  label: 'Archived' },
+  ],
+  suppliers: [
+    { key: 'supplier_name',       label: 'Supplier' },
+    { key: 'supplier_city',       label: 'City' },
+    { key: 'supplier_state',      label: 'State' },
+    { key: 'supplier_branch',     label: 'Branch' },
+    { key: 'supplier_phone',      label: 'Phone' },
+    { key: 'supplier_email',      label: 'Order Email' },
+    { key: 'region_count',        label: 'Used By Regions' },
+    { key: 'supplier_is_active',  label: 'Active' },
+  ],
+  unused: [
+    { key: 'supplier_name',       label: 'Supplier' },
+    { key: 'supplier_city',       label: 'City' },
+    { key: 'supplier_state',      label: 'State' },
+    { key: 'supplier_branch',     label: 'Branch' },
+    { key: 'supplier_phone',      label: 'Phone' },
+    { key: 'supplier_email',      label: 'Order Email' },
+    { key: 'supplier_is_active',  label: 'Active' },
+  ],
+};
+
+// Default sort per view -- relationships sorts by region, regions/suppliers by name
+const DEFAULT_SORT_BY_VIEW = {
+  relationships: 'region_name',
+  regions:       'region_name',
+  suppliers:     'supplier_name',
+  unused:        'supplier_name',
+};
 
 // Fields shown in the side panel for a region (in order). Bookkeeping fields go in a collapsible group.
 const REGION_FIELDS_MAIN = [
@@ -592,108 +647,136 @@ const SUPPLIER_FIELDS_AUDIT = [
 // ============================================================
 // BUILD DENORMALIZED ROWS (called after every fetch)
 // ============================================================
+// Produces four parallel row lists, one per view mode. Each row keeps
+// a reference to its underlying _region and/or _supplier raw record so
+// the side panel can show every original field on click.
 function buildRows() {
-  ROWS = [];
-  usedSupplierIds = new Set(APP_DATA.relationships.map(r => r.supplier_id));
-
-function pickField(obj, ...keys) {
-  for (const k of keys) {
-    if (obj && obj[k] != null && obj[k] !== '') return String(obj[k]);
+  function pickField(obj, ...keys) {
+    for (const k of keys) {
+      if (obj && obj[k] != null && obj[k] !== '') return String(obj[k]);
+    }
+    return '';
   }
-  return '';
-}
 
-// Index regions and suppliers by Id for fast lookup, and build the
-// relationships list by parsing SupplierLocationIds on each region.
-const regionsById = {};
-const suppliersById = {};
-const relationships = [];
-
-for (const r of (APP_DATA.regions_raw || [])) {
-  if (r && r.Id) regionsById[r.Id] = r;
-}
-for (const s of (APP_DATA.suppliers_raw || [])) {
-  if (s && s.Id) suppliersById[s.Id] = s;
-}
-for (const r of (APP_DATA.regions_raw || [])) {
-  if (!r || !r.Id || !r.SupplierLocationIds) continue;
-  let sids = [];
-  try {
-    const parsed = JSON.parse(r.SupplierLocationIds);
-    if (Array.isArray(parsed)) sids = parsed;
-  } catch (e) { continue; }
-  for (const sid of sids) {
-    if (suppliersById[sid]) relationships.push({ region_id: r.Id, supplier_id: sid });
+  // Extract state from a region's AddressDisplay like "City, State, 12345"
+  function extractStateFromAddr(addr) {
+    const m = (addr || '').match(/,\s*([A-Za-z ]+),?\s*\d{5}/);
+    return m ? m[1].trim() : '';
   }
-}
-APP_DATA.regions = regionsById;
-APP_DATA.suppliers = suppliersById;
-APP_DATA.relationships = relationships;
-usedSupplierIds = new Set(relationships.map(r => r.supplier_id));
 
-for (const rel of APP_DATA.relationships) {
-  const r = APP_DATA.regions[rel.region_id] || {};
-  const s = APP_DATA.suppliers[rel.supplier_id] || {};
-  // Extract state from region's AddressDisplay (after the second-to-last comma typically)
-  const regAddr = pickField(r, 'AddressDisplay');
-  // Try to extract state from region address - look for ", XX " pattern
-  let regionState = '';
-  const stateMatch = regAddr.match(/,\s*([A-Za-z ]+),?\s*\d{5}/);
-  if (stateMatch) regionState = stateMatch[1].trim();
+  // Index regions and suppliers by Id
+  const regionsById = {};
+  const suppliersById = {};
+  for (const r of (APP_DATA.regions_raw   || [])) { if (r && r.Id) regionsById[r.Id]   = r; }
+  for (const s of (APP_DATA.suppliers_raw || [])) { if (s && s.Id) suppliersById[s.Id] = s; }
 
-  ROWS.push({
-    region_id:        rel.region_id,
-    supplier_id:      rel.supplier_id,
-    region_name:      pickField(r, 'Name'),
-    region_prefix:    pickField(r, 'JobNumberPrefix'),
-    region_state:     regionState,
-    supplier_name:    pickField(s, 'Name'),
-    supplier_city:    pickField(s, 'City'),
-    supplier_state:   pickField(s, 'State'),
-    supplier_branch:  pickField(s, 'BranchCode'),
-    supplier_phone:   pickField(s, 'Phone'),
-    supplier_email:   pickField(s, 'OrderEmail'),
-    _region:          r,
-    _supplier:        s,
-    _unused:          false,
-  });
-}
+  // Build relationships list from each region's SupplierLocationIds (JSON array)
+  const relationships = [];
+  for (const r of (APP_DATA.regions_raw || [])) {
+    if (!r || !r.Id || !r.SupplierLocationIds) continue;
+    let sids = [];
+    try {
+      const parsed = JSON.parse(r.SupplierLocationIds);
+      if (Array.isArray(parsed)) sids = parsed;
+    } catch (e) { continue; }
+    for (const sid of sids) {
+      if (suppliersById[sid]) relationships.push({ region_id: r.Id, supplier_id: sid });
+    }
+  }
+  APP_DATA.regions = regionsById;
+  APP_DATA.suppliers = suppliersById;
+  APP_DATA.relationships = relationships;
+  usedSupplierIds = new Set(relationships.map(r => r.supplier_id));
 
-// Add unused suppliers (those not referenced by any region)
-for (const [sid, s] of Object.entries(APP_DATA.suppliers)) {
-  if (!usedSupplierIds.has(sid)) {
-    ROWS.push({
-      region_id:        '',
-      supplier_id:      sid,
-      region_name:      '(no region uses this supplier)',
-      region_prefix:    '',
-      region_state:     '',
+  // Count region->supplier relationships in each direction for the summary columns
+  const suppliersPerRegion = {};
+  const regionsPerSupplier = {};
+  for (const rel of relationships) {
+    suppliersPerRegion[rel.region_id]   = (suppliersPerRegion[rel.region_id]   || 0) + 1;
+    regionsPerSupplier[rel.supplier_id] = (regionsPerSupplier[rel.supplier_id] || 0) + 1;
+  }
+
+  // ---- relationships view: one row per region-supplier pair ----
+  ROWS_BY_VIEW.relationships = relationships.map(rel => {
+    const r = regionsById[rel.region_id] || {};
+    const s = suppliersById[rel.supplier_id] || {};
+    return {
+      region_id:        rel.region_id,
+      supplier_id:      rel.supplier_id,
+      region_name:      pickField(r, 'Name'),
+      region_prefix:    pickField(r, 'JobNumberPrefix'),
+      region_state:     extractStateFromAddr(pickField(r, 'AddressDisplay')),
       supplier_name:    pickField(s, 'Name'),
       supplier_city:    pickField(s, 'City'),
       supplier_state:   pickField(s, 'State'),
       supplier_branch:  pickField(s, 'BranchCode'),
       supplier_phone:   pickField(s, 'Phone'),
       supplier_email:   pickField(s, 'OrderEmail'),
-      _region:          null,
+      _region:          r,
       _supplier:        s,
-      _unused:          true,
-    });
-  }
-}
+      _unused:          false,
+    };
+  });
 
-// Pre-compute a lowercased search blob for each row (faster filtering)
-for (const row of ROWS) {
-  row._search = COLUMNS.map(c => row[c.key] || '').join(' \u0000 ').toLowerCase();
-}
+  // ---- regions view: one row per region ----
+  ROWS_BY_VIEW.regions = Object.values(regionsById).map(r => ({
+    region_id:           r.Id,
+    region_name:         pickField(r, 'Name'),
+    region_prefix:       pickField(r, 'JobNumberPrefix'),
+    region_state:        extractStateFromAddr(pickField(r, 'AddressDisplay')),
+    region_address:      pickField(r, 'AddressDisplay'),
+    region_sales_tax:    r.SalesTax != null ? (Number(r.SalesTax) * 100).toFixed(2) + '%' : '',
+    region_is_archived:  r.IsArchived === true ? 'Yes' : 'No',
+    supplier_count:      suppliersPerRegion[r.Id] || 0,
+    _region:             r,
+    _supplier:           null,
+    _unused:             false,
+  }));
+
+  // ---- suppliers view: one row per supplier (used or not) ----
+  ROWS_BY_VIEW.suppliers = Object.values(suppliersById).map(s => {
+    const isUnused = !usedSupplierIds.has(s.Id);
+    return {
+      supplier_id:         s.Id,
+      supplier_name:       pickField(s, 'Name'),
+      supplier_city:       pickField(s, 'City'),
+      supplier_state:      pickField(s, 'State'),
+      supplier_branch:     pickField(s, 'BranchCode'),
+      supplier_phone:      pickField(s, 'Phone'),
+      supplier_email:      pickField(s, 'OrderEmail'),
+      supplier_is_active:  s.IsActive === true ? 'Yes' : (s.IsActive === false ? 'No' : ''),
+      region_count:        regionsPerSupplier[s.Id] || 0,
+      _region:             null,
+      _supplier:           s,
+      _unused:             isUnused,
+    };
+  });
+
+  // ---- unused view: suppliers that no region references ----
+  ROWS_BY_VIEW.unused = ROWS_BY_VIEW.suppliers.filter(row => row._unused);
+
+  // Pre-compute search blob for each row in each view
+  for (const view in ROWS_BY_VIEW) {
+    const cols = COLUMNS_BY_VIEW[view];
+    for (const row of ROWS_BY_VIEW[view]) {
+      row._search = cols.map(c => row[c.key] == null ? '' : String(row[c.key])).join(' \u0000 ').toLowerCase();
+    }
+  }
 } // end buildRows
 
 // ============================================================
 // STATE
 // ============================================================
+let viewMode = 'relationships';                         // 'relationships' | 'regions' | 'suppliers' | 'unused'
+let ROWS_BY_VIEW = { relationships: [], regions: [], suppliers: [], unused: [] };
 let searchTerm = '';
-let activeFilters = [];   // [{type:'region'|'supplier'|'unused', value:'...'}]
+let activeFilters = [];   // [{type:'region'|'supplier', value:'...'}]
 let sortKey = 'region_name';
 let sortAsc = true;
+
+// Shorthand: rows/columns for the currently active view
+function activeRows()    { return ROWS_BY_VIEW[viewMode] || []; }
+function activeColumns() { return COLUMNS_BY_VIEW[viewMode] || []; }
 
 // ============================================================
 // RENDER
@@ -709,7 +792,7 @@ function renderStats() {
 function renderHeader() {
   const tr = document.getElementById('grid-header');
   tr.innerHTML = '';
-  for (const col of COLUMNS) {
+  for (const col of activeColumns()) {
     const th = document.createElement('th');
     th.textContent = col.label;
     if (sortKey === col.key) {
@@ -745,29 +828,32 @@ function renderFilters() {
 }
 
 function applyFilters() {
-  let filtered = ROWS;
+  let filtered = activeRows();
 
-  // Apply pill filters
+  // Pill filters (only meaningful in relationships view)
   for (const f of activeFilters) {
     if (f.type === 'region') {
       filtered = filtered.filter(r => r.region_name === f.value);
     } else if (f.type === 'supplier') {
       filtered = filtered.filter(r => r.supplier_name === f.value);
-    } else if (f.type === 'unused-only') {
-      filtered = filtered.filter(r => r._unused);
     }
   }
 
-  // Apply search
+  // Search
   const q = searchTerm.toLowerCase().trim();
   if (q) {
-    filtered = filtered.filter(r => r._search.indexOf(q) !== -1);
+    filtered = filtered.filter(r => r._search && r._search.indexOf(q) !== -1);
   }
 
   // Sort
-  filtered.sort((a, b) => {
-    const av = (a[sortKey] || '').toLowerCase();
-    const bv = (b[sortKey] || '').toLowerCase();
+  filtered = filtered.slice().sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    // Numeric-aware sort for count columns
+    if (typeof av === 'number' && typeof bv === 'number') {
+      return sortAsc ? av - bv : bv - av;
+    }
+    av = (av == null ? '' : String(av)).toLowerCase();
+    bv = (bv == null ? '' : String(bv)).toLowerCase();
     if (av < bv) return sortAsc ? -1 : 1;
     if (av > bv) return sortAsc ? 1 : -1;
     return 0;
@@ -789,27 +875,31 @@ function renderTable() {
     tr.appendChild(td);
     tbody.appendChild(tr);
   } else {
+    const cols = activeColumns();
     for (const row of filtered) {
       const tr = document.createElement('tr');
       tr.className = 'row' + (row._unused ? ' unused' : '');
-      for (const col of COLUMNS) {
+      for (const col of cols) {
         const td = document.createElement('td');
-        const val = row[col.key] || '';
-        if (col.key === 'region_name' && !row._unused) {
+        const val = row[col.key] == null ? '' : row[col.key];
+        if (col.key === 'region_name' && val) {
           const a = document.createElement('a');
           a.className = 'clickable col-name';
           a.textContent = val;
           a.addEventListener('click', e => {
             e.stopPropagation();
+            // From regions view -> switch to relationships filtered to this region
+            switchView('relationships');
             setFilter('region', 'Region', val);
           });
           td.appendChild(a);
-        } else if (col.key === 'supplier_name') {
+        } else if (col.key === 'supplier_name' && val) {
           const a = document.createElement('a');
           a.className = 'clickable col-name';
           a.textContent = val;
           a.addEventListener('click', e => {
             e.stopPropagation();
+            switchView('relationships');
             setFilter('supplier', 'Supplier', val);
           });
           td.appendChild(a);
@@ -828,7 +918,7 @@ function renderTable() {
           td.appendChild(a);
         } else if (col.key === 'supplier_phone' && val) {
           const a = document.createElement('a');
-          a.href = 'tel:' + val.replace(/[^0-9+]/g, '');
+          a.href = 'tel:' + String(val).replace(/[^0-9+]/g, '');
           a.textContent = val;
           a.className = 'clickable';
           a.addEventListener('click', e => e.stopPropagation());
@@ -844,8 +934,35 @@ function renderTable() {
   }
 
   document.getElementById('result-count').textContent = filtered.length.toLocaleString();
-  document.getElementById('total-count').textContent = ROWS.length.toLocaleString();
+  document.getElementById('total-count').textContent = activeRows().length.toLocaleString();
 }
+
+// ============================================================
+// VIEW MODE
+// ============================================================
+function switchView(newView) {
+  if (!ROWS_BY_VIEW[newView]) return;
+  viewMode = newView;
+  activeFilters = [];           // pills are only meaningful in relationships view
+  sortKey = DEFAULT_SORT_BY_VIEW[newView];
+  sortAsc = true;
+  // Update active card visual + table caption
+  document.querySelectorAll('.stat').forEach(c => c.classList.remove('active-view'));
+  const card = document.getElementById('stat-' + (newView === 'relationships' ? 'relationships' : newView));
+  if (card) card.classList.add('active-view');
+  document.getElementById('view-label').textContent = VIEW_LABELS[newView] || '';
+  renderFilters();
+  renderHeader();
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const VIEW_LABELS = {
+  relationships: 'Region \u2194 Supplier Relationships',
+  regions:       'Regions',
+  suppliers:     'Suppliers',
+  unused:        'Unused Suppliers',
+};
 
 // ============================================================
 // FILTERS
@@ -963,12 +1080,10 @@ document.getElementById('overlay').addEventListener('click', closePanel);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closePanel();
 });
-document.getElementById('stat-unused').addEventListener('click', () => {
-  setFilter('unused-only', 'Filter', 'Unused suppliers only');
-});
-document.getElementById('stat-regions').addEventListener('click', clearAll);
-document.getElementById('stat-suppliers').addEventListener('click', clearAll);
-document.getElementById('stat-relationships').addEventListener('click', clearAll);
+document.getElementById('stat-regions').addEventListener('click',       () => switchView('regions'));
+document.getElementById('stat-suppliers').addEventListener('click',     () => switchView('suppliers'));
+document.getElementById('stat-relationships').addEventListener('click', () => switchView('relationships'));
+document.getElementById('stat-unused').addEventListener('click',        () => switchView('unused'));
 
 // Settings menu toggle
 (function() {
@@ -1025,8 +1140,7 @@ async function fetchData() {
     lastFetchedAt = new Date(payload.fetchedAt || Date.now());
     buildRows();
     renderStats();
-    renderHeader();
-    renderTable();
+    switchView(viewMode);   // sets active card highlight + renders header & table
 
     statusEl.innerHTML = `<span style="color:var(--green);">&#10003;</span> Loaded ${APP_DATA.regions_raw.length} regions, ${APP_DATA.suppliers_raw.length} suppliers at ${lastFetchedAt.toLocaleTimeString()}`;
   } catch (err) {
