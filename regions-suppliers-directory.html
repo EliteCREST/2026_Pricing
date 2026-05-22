@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regions & Suppliers Directory v2.0.0 | ECS Brands</title>
+<style>
+  :root {
+    --navy: #1B2A4A;
+    --blue: #1F5FAD;
+    --gold: #C9A961;
+    --light-blue-bg: #EAF1FB;
+    --border: #D5DDE8;
+    --text-muted: #5A6478;
+    --green: #1F7A3D;
+    --red: #B53636;
+    --amber: #B5811F;
+    --bg: #F4F6FA;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ---------- HEADER ---------- */
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 28px;
+    border-bottom: 4px solid var(--gold);
+    display: grid;
+    grid-template-columns: 4px 1fr auto;
+    gap: 18px;
+    align-items: center;
+  }
+  .header .accent { background: var(--gold); height: 32px; }
+  .header h1 {
+    margin: 0;
+    font-size: 17px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  .header h1 .version {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    margin-left: 10px;
+    text-transform: none;
+  }
+  .header .subtitle {
+    font-size: 11px;
+    color: #C5CFE0;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .header .badge {
+    background: rgba(201,169,97,0.15);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 4px 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 2px;
+  }
+
+  /* ---------- MAIN ---------- */
+  .container {
+    max-width: 1500px;
+    margin: 20px auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ---------- STAT CARDS ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .stat {
+    background: white;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    padding: 12px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .stat:hover { background: var(--light-blue-bg); }
+  .stat.warn { border-left-color: var(--amber); }
+  .stat.warn:hover { background: #FBF1DD; }
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 2px;
+    line-height: 1.1;
+  }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---------- SEARCH BAR ---------- */
+  .search-bar {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 240px;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+  }
+  .search-input:focus { outline: none; border-color: var(--blue); }
+  .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .pill {
+    background: var(--light-blue-bg);
+    color: var(--navy);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #C8D5E8;
+  }
+  .pill .close {
+    background: var(--blue);
+    color: white;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .pill .close:hover { background: var(--navy); }
+  .result-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .result-count strong { color: var(--navy); font-weight: 700; }
+  button.clear-btn {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--navy);
+    padding: 6px 12px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  button.clear-btn:hover { background: #F1F4F9; }
+
+  /* ---------- TABLE ---------- */
+  .table-wrap {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .table-scroll { max-height: 70vh; overflow-y: auto; overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th {
+    background: var(--navy);
+    color: white;
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  th:hover { background: #2A3A5C; }
+  th .sort-arrow {
+    color: var(--gold);
+    margin-left: 4px;
+    font-size: 10px;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #EDF0F4;
+    vertical-align: top;
+  }
+  tr.row { cursor: pointer; transition: background 0.08s; }
+  tr.row:hover { background: var(--light-blue-bg); }
+  tr.row.unused td { font-style: italic; color: var(--text-muted); }
+  .clickable {
+    color: var(--blue);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .clickable:hover { text-decoration: underline; }
+  .col-name { font-weight: 700; }
+  .badge-unused {
+    background: #FBF1DD;
+    color: var(--amber);
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+  }
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .empty-state .big { font-size: 18px; color: var(--navy); font-weight: 700; margin-bottom: 6px; }
+
+  /* ---------- DETAIL PANEL ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(27,42,74,0.5);
+    z-index: 100;
+    display: none;
+  }
+  .overlay.shown { display: block; }
+  .panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 720px;
+    max-width: 95vw;
+    height: 100vh;
+    background: white;
+    z-index: 101;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    transform: translateX(100%);
+    transition: transform 0.2s;
+    overflow-y: auto;
+  }
+  .panel.shown { transform: translateX(0); }
+  .panel-header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid var(--gold);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .panel-header h2 {
+    margin: 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .panel-header .close-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .panel-header .close-btn:hover { background: rgba(255,255,255,0.1); }
+  .panel-body { padding: 0; }
+  .panel-section {
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-section-header {
+    background: var(--light-blue-bg);
+    padding: 10px 24px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--blue);
+    border-bottom: 2px solid var(--blue);
+  }
+  .panel-fields {
+    padding: 12px 24px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: 12px;
+    border-bottom: 1px solid #F4F6FA;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-label {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    padding-top: 2px;
+  }
+  .field-value {
+    color: var(--navy);
+    word-break: break-word;
+  }
+  .field-value.empty { color: #B0BAC9; font-style: italic; }
+  .field-value.guid { font-family: 'Consolas','Courier New',monospace; font-size: 11px; color: var(--text-muted); }
+  .panel-section.collapsible .panel-fields { display: none; }
+  .panel-section.collapsible .panel-section-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-section.collapsible .panel-section-header::after {
+    content: '+';
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .panel-section.collapsible.open .panel-fields { display: block; }
+  .panel-section.collapsible.open .panel-section-header::after {
+    content: '–';
+  }
+
+  /* ---------- FOOTER ---------- */
+  .footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 30px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .footer .brand-bar {
+    display: inline-block;
+    width: 26px;
+    height: 3px;
+    background: var(--gold);
+    vertical-align: middle;
+    margin: 0 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="accent"></div>
+  <div>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v2.0.0</span></h1>
+    <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
+  </div>
+  <div class="badge">Elite Tools</div>
+</div>
+
+<div class="container">
+
+  <div class="stats">
+    <div class="stat" id="stat-regions">
+      <div class="stat-label">Regions</div>
+      <div class="stat-value" id="stat-regions-count">0</div>
+      <div class="stat-sub">Click to view all</div>
+    </div>
+    <div class="stat" id="stat-suppliers">
+      <div class="stat-label">Suppliers</div>
+      <div class="stat-value" id="stat-suppliers-count">0</div>
+      <div class="stat-sub">Click to view all</div>
+    </div>
+    <div class="stat" id="stat-relationships">
+      <div class="stat-label">Relationships</div>
+      <div class="stat-value" id="stat-relationships-count">0</div>
+      <div class="stat-sub">Region &harr; Supplier pairs</div>
+    </div>
+    <div class="stat warn" id="stat-unused">
+      <div class="stat-label">Unused Suppliers</div>
+      <div class="stat-value" id="stat-unused-count">0</div>
+      <div class="stat-sub">Click to view</div>
+    </div>
+  </div>
+
+  <div class="backend-bar" style="background:white;border:1px solid var(--border);border-radius:3px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;font-size:12px;">
+    <button id="refresh-btn" style="background:var(--blue);color:white;border:none;padding:7px 16px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-radius:3px;cursor:pointer;">Refresh from Sheet</button>
+    <span id="backend-status" style="color:var(--text-muted);flex:1;">Initializing...</span>
+  </div>
+
+  <div class="search-bar">
+    <input type="search" class="search-input" id="search" placeholder="Search any column — region, supplier, city, state, branch code, phone…" autofocus>
+    <div class="filter-pills" id="filter-pills"></div>
+    <button class="clear-btn" id="clear-all">Clear All</button>
+    <div class="result-count"><strong id="result-count">0</strong> of <strong id="total-count">0</strong> shown</div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table id="grid">
+        <thead>
+          <tr id="grid-header"></tr>
+        </thead>
+        <tbody id="grid-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    ECS Brands <span class="brand-bar"></span> Elite Tools <span class="brand-bar"></span> Internal Use
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="panel" id="panel">
+  <div class="panel-header">
+    <h2 id="panel-title">Detail</h2>
+    <button class="close-btn" id="panel-close">Close</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<script>
+// ============================================================
+// BACKEND CONFIG -- the Apps Script /exec URL
+// ============================================================
+// Edit this when you deploy a new Apps Script version (the /exec URL is
+// permanent across deployments if you choose "Manage deployments" -> edit
+// the existing deployment instead of creating a new one).
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzXO8Sj3eSTv4VqU60Kk8tQsrYYws_-iNktXA5pIn_-B2rAtky-tSPep04C-V4-s48/exec';
+
+// ============================================================
+// RUNTIME DATA (populated by fetchData)
+// ============================================================
+let APP_DATA = { regions: {}, suppliers: {}, relationships: [] };
+let usedSupplierIds = new Set();
+let ROWS = [];
+let lastFetchedAt = null;
+
+// ============================================================
+// CONFIG -- which fields show in main table vs side panel
+// ============================================================
+const COLUMNS = [
+  { key: 'region_name',         label: 'Region',           type: 'region' },
+  { key: 'region_prefix',       label: 'Job Prefix' },
+  { key: 'region_state',        label: 'Region State' },
+  { key: 'supplier_name',       label: 'Supplier',         type: 'supplier' },
+  { key: 'supplier_city',       label: 'Supplier City' },
+  { key: 'supplier_state',      label: 'Supplier State' },
+  { key: 'supplier_branch',     label: 'Branch' },
+  { key: 'supplier_phone',      label: 'Phone' },
+  { key: 'supplier_email',      label: 'Order Email' },
+];
+
+// Fields shown in the side panel for a region (in order). Bookkeeping fields go in a collapsible group.
+const REGION_FIELDS_MAIN = [
+  'Name','JobNumberPrefix','AddressDisplay','Description','SalesTax',
+  'OfficeFeeAmount','OfficeFeePercent','FixOfficeFee','ProfitPercentageTarget',
+  'MinimumProfitPercentage','RevenueTarget','CommissionAmounts','Trades',
+  'IsArchived','IsDraft','IsPureRegion','CanUseUpdatedFinancialBreakdown',
+];
+const REGION_FIELDS_IDS = [
+  'Id','PrimarySupplierLocationId','SupplierLocationIds','AddressId',
+  'BrandId','PhoneNumberId','ClientId','NetsuiteClassId','NetsuiteSubsidiaryId',
+  'EagleviewAccountId','StripeAccountId','JobsGoalId','LogoS3Key',
+  'NextJobNumberIndex',
+];
+const REGION_FIELDS_AUDIT = [
+  'CreatedAt','CreatedById','UpdatedAt','UpdatedById','Version','RowVersion','Deleted',
+];
+
+const SUPPLIER_FIELDS_MAIN = [
+  'Name','BranchCode','AddressDisplay','City','State','Zip','Street1',
+  'Phone','Fax','OrderEmail','IsActive',
+];
+const SUPPLIER_FIELDS_IDS = [
+  'Id','SupplierId','NetSuiteVendorId',
+];
+const SUPPLIER_FIELDS_AUDIT = [
+  'CreatedAt','CreatedById','UpdatedAt','UpdatedById','Version','RowVersion','Deleted',
+];
+
+// ============================================================
+// BUILD DENORMALIZED ROWS (called after every fetch)
+// ============================================================
+function buildRows() {
+  ROWS = [];
+  usedSupplierIds = new Set(APP_DATA.relationships.map(r => r.supplier_id));
+
+function pickField(obj, ...keys) {
+  for (const k of keys) {
+    if (obj && obj[k] != null && obj[k] !== '') return String(obj[k]);
+  }
+  return '';
+}
+
+// Index regions and suppliers by Id for fast lookup, and build the
+// relationships list by parsing SupplierLocationIds on each region.
+const regionsById = {};
+const suppliersById = {};
+const relationships = [];
+
+for (const r of (APP_DATA.regions_raw || [])) {
+  if (r && r.Id) regionsById[r.Id] = r;
+}
+for (const s of (APP_DATA.suppliers_raw || [])) {
+  if (s && s.Id) suppliersById[s.Id] = s;
+}
+for (const r of (APP_DATA.regions_raw || [])) {
+  if (!r || !r.Id || !r.SupplierLocationIds) continue;
+  let sids = [];
+  try {
+    const parsed = JSON.parse(r.SupplierLocationIds);
+    if (Array.isArray(parsed)) sids = parsed;
+  } catch (e) { continue; }
+  for (const sid of sids) {
+    if (suppliersById[sid]) relationships.push({ region_id: r.Id, supplier_id: sid });
+  }
+}
+APP_DATA.regions = regionsById;
+APP_DATA.suppliers = suppliersById;
+APP_DATA.relationships = relationships;
+usedSupplierIds = new Set(relationships.map(r => r.supplier_id));
+
+for (const rel of APP_DATA.relationships) {
+  const r = APP_DATA.regions[rel.region_id] || {};
+  const s = APP_DATA.suppliers[rel.supplier_id] || {};
+  // Extract state from region's AddressDisplay (after the second-to-last comma typically)
+  const regAddr = pickField(r, 'AddressDisplay');
+  // Try to extract state from region address - look for ", XX " pattern
+  let regionState = '';
+  const stateMatch = regAddr.match(/,\s*([A-Za-z ]+),?\s*\d{5}/);
+  if (stateMatch) regionState = stateMatch[1].trim();
+
+  ROWS.push({
+    region_id:        rel.region_id,
+    supplier_id:      rel.supplier_id,
+    region_name:      pickField(r, 'Name'),
+    region_prefix:    pickField(r, 'JobNumberPrefix'),
+    region_state:     regionState,
+    supplier_name:    pickField(s, 'Name'),
+    supplier_city:    pickField(s, 'City'),
+    supplier_state:   pickField(s, 'State'),
+    supplier_branch:  pickField(s, 'BranchCode'),
+    supplier_phone:   pickField(s, 'Phone'),
+    supplier_email:   pickField(s, 'OrderEmail'),
+    _region:          r,
+    _supplier:        s,
+    _unused:          false,
+  });
+}
+
+// Add unused suppliers (those not referenced by any region)
+const usedSupplierIds = new Set(APP_DATA.relationships.map(r => r.supplier_id));
+for (const [sid, s] of Object.entries(APP_DATA.suppliers)) {
+  if (!usedSupplierIds.has(sid)) {
+    ROWS.push({
+      region_id:        '',
+      supplier_id:      sid,
+      region_name:      '(no region uses this supplier)',
+      region_prefix:    '',
+      region_state:     '',
+      supplier_name:    pickField(s, 'Name'),
+      supplier_city:    pickField(s, 'City'),
+      supplier_state:   pickField(s, 'State'),
+      supplier_branch:  pickField(s, 'BranchCode'),
+      supplier_phone:   pickField(s, 'Phone'),
+      supplier_email:   pickField(s, 'OrderEmail'),
+      _region:          null,
+      _supplier:        s,
+      _unused:          true,
+    });
+  }
+}
+
+// Pre-compute a lowercased search blob for each row (faster filtering)
+for (const row of ROWS) {
+  row._search = COLUMNS.map(c => row[c.key] || '').join(' \u0000 ').toLowerCase();
+}
+} // end buildRows
+
+// ============================================================
+// STATE
+// ============================================================
+let searchTerm = '';
+let activeFilters = [];   // [{type:'region'|'supplier'|'unused', value:'...'}]
+let sortKey = 'region_name';
+let sortAsc = true;
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderStats() {
+  document.getElementById('stat-regions-count').textContent = Object.keys(APP_DATA.regions).length.toLocaleString();
+  document.getElementById('stat-suppliers-count').textContent = Object.keys(APP_DATA.suppliers).length.toLocaleString();
+  document.getElementById('stat-relationships-count').textContent = APP_DATA.relationships.length.toLocaleString();
+  const unused = Object.keys(APP_DATA.suppliers).length - usedSupplierIds.size;
+  document.getElementById('stat-unused-count').textContent = unused.toLocaleString();
+}
+
+function renderHeader() {
+  const tr = document.getElementById('grid-header');
+  tr.innerHTML = '';
+  for (const col of COLUMNS) {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    if (sortKey === col.key) {
+      const arrow = document.createElement('span');
+      arrow.className = 'sort-arrow';
+      arrow.textContent = sortAsc ? '\u25B2' : '\u25BC';
+      th.appendChild(arrow);
+    }
+    th.addEventListener('click', () => {
+      if (sortKey === col.key) sortAsc = !sortAsc;
+      else { sortKey = col.key; sortAsc = true; }
+      renderHeader();
+      renderTable();
+    });
+    tr.appendChild(th);
+  }
+}
+
+function renderFilters() {
+  const pills = document.getElementById('filter-pills');
+  pills.innerHTML = '';
+  for (const f of activeFilters) {
+    const pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.innerHTML = `${f.label}: ${escapeHtml(f.value)} <span class="close">\u00D7</span>`;
+    pill.querySelector('.close').addEventListener('click', () => {
+      activeFilters = activeFilters.filter(x => x !== f);
+      renderFilters();
+      renderTable();
+    });
+    pills.appendChild(pill);
+  }
+}
+
+function applyFilters() {
+  let filtered = ROWS;
+
+  // Apply pill filters
+  for (const f of activeFilters) {
+    if (f.type === 'region') {
+      filtered = filtered.filter(r => r.region_name === f.value);
+    } else if (f.type === 'supplier') {
+      filtered = filtered.filter(r => r.supplier_name === f.value);
+    } else if (f.type === 'unused-only') {
+      filtered = filtered.filter(r => r._unused);
+    }
+  }
+
+  // Apply search
+  const q = searchTerm.toLowerCase().trim();
+  if (q) {
+    filtered = filtered.filter(r => r._search.indexOf(q) !== -1);
+  }
+
+  // Sort
+  filtered.sort((a, b) => {
+    const av = (a[sortKey] || '').toLowerCase();
+    const bv = (b[sortKey] || '').toLowerCase();
+    if (av < bv) return sortAsc ? -1 : 1;
+    if (av > bv) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  return filtered;
+}
+
+function renderTable() {
+  const filtered = applyFilters();
+  const tbody = document.getElementById('grid-body');
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = COLUMNS.length;
+    td.innerHTML = '<div class="empty-state"><div class="big">No matches</div><div>Try clearing filters or broadening your search.</div></div>';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    for (const row of filtered) {
+      const tr = document.createElement('tr');
+      tr.className = 'row' + (row._unused ? ' unused' : '');
+      for (const col of COLUMNS) {
+        const td = document.createElement('td');
+        const val = row[col.key] || '';
+        if (col.key === 'region_name' && !row._unused) {
+          const a = document.createElement('a');
+          a.className = 'clickable col-name';
+          a.textContent = val;
+          a.addEventListener('click', e => {
+            e.stopPropagation();
+            setFilter('region', 'Region', val);
+          });
+          td.appendChild(a);
+        } else if (col.key === 'supplier_name') {
+          const a = document.createElement('a');
+          a.className = 'clickable col-name';
+          a.textContent = val;
+          a.addEventListener('click', e => {
+            e.stopPropagation();
+            setFilter('supplier', 'Supplier', val);
+          });
+          td.appendChild(a);
+          if (row._unused) {
+            const b = document.createElement('span');
+            b.className = 'badge-unused';
+            b.textContent = 'Unused';
+            td.appendChild(b);
+          }
+        } else if (col.key === 'supplier_email' && val) {
+          const a = document.createElement('a');
+          a.href = 'mailto:' + val;
+          a.textContent = val;
+          a.className = 'clickable';
+          a.addEventListener('click', e => e.stopPropagation());
+          td.appendChild(a);
+        } else if (col.key === 'supplier_phone' && val) {
+          const a = document.createElement('a');
+          a.href = 'tel:' + val.replace(/[^0-9+]/g, '');
+          a.textContent = val;
+          a.className = 'clickable';
+          a.addEventListener('click', e => e.stopPropagation());
+          td.appendChild(a);
+        } else {
+          td.textContent = val;
+        }
+        tr.appendChild(td);
+      }
+      tr.addEventListener('click', () => openPanel(row));
+      tbody.appendChild(tr);
+    }
+  }
+
+  document.getElementById('result-count').textContent = filtered.length.toLocaleString();
+  document.getElementById('total-count').textContent = ROWS.length.toLocaleString();
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+function setFilter(type, label, value) {
+  // Replace any filter of the same type
+  activeFilters = activeFilters.filter(f => f.type !== type);
+  activeFilters.push({ type, label, value });
+  renderFilters();
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function clearAll() {
+  searchTerm = '';
+  document.getElementById('search').value = '';
+  activeFilters = [];
+  renderFilters();
+  renderTable();
+}
+
+// ============================================================
+// DETAIL PANEL
+// ============================================================
+function openPanel(row) {
+  const title = row._unused
+    ? row.supplier_name + ' (Unused Supplier)'
+    : row.region_name + ' \u2194 ' + row.supplier_name;
+  document.getElementById('panel-title').textContent = title;
+  const body = document.getElementById('panel-body');
+  body.innerHTML = '';
+
+  if (row._region) {
+    body.appendChild(buildPanelSection('Region', row._region, REGION_FIELDS_MAIN, REGION_FIELDS_IDS, REGION_FIELDS_AUDIT));
+  }
+  body.appendChild(buildPanelSection('Supplier', row._supplier, SUPPLIER_FIELDS_MAIN, SUPPLIER_FIELDS_IDS, SUPPLIER_FIELDS_AUDIT));
+
+  // Wire collapsibles
+  body.querySelectorAll('.panel-section.collapsible .panel-section-header').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
+  });
+
+  document.getElementById('overlay').classList.add('shown');
+  document.getElementById('panel').classList.add('shown');
+}
+
+function buildPanelSection(label, obj, mainFields, idFields, auditFields) {
+  const wrap = document.createElement('div');
+
+  // Main fields
+  const main = document.createElement('div');
+  main.className = 'panel-section';
+  main.innerHTML = `
+    <div class="panel-section-header">${label} \u2014 Key Fields</div>
+    <div class="panel-fields">${renderFields(obj, mainFields)}</div>
+  `;
+  wrap.appendChild(main);
+
+  // IDs collapsible
+  const ids = document.createElement('div');
+  ids.className = 'panel-section collapsible';
+  ids.innerHTML = `
+    <div class="panel-section-header">${label} \u2014 IDs &amp; References</div>
+    <div class="panel-fields">${renderFields(obj, idFields, true)}</div>
+  `;
+  wrap.appendChild(ids);
+
+  // Audit collapsible
+  const audit = document.createElement('div');
+  audit.className = 'panel-section collapsible';
+  audit.innerHTML = `
+    <div class="panel-section-header">${label} \u2014 Audit / Bookkeeping</div>
+    <div class="panel-fields">${renderFields(obj, auditFields)}</div>
+  `;
+  wrap.appendChild(audit);
+
+  return wrap;
+}
+
+function renderFields(obj, fields, isGuid = false) {
+  return fields.map(f => {
+    let val = obj[f];
+    const isEmpty = val == null || val === '';
+    if (isEmpty) val = '\u2014';
+    const guidLike = isGuid || (typeof val === 'string' && /^[0-9a-f-]{36}$/.test(val));
+    const cls = isEmpty ? 'field-value empty' : (guidLike ? 'field-value guid' : 'field-value');
+    return `
+      <div class="field-row">
+        <div class="field-label">${escapeHtml(f)}</div>
+        <div class="${cls}">${escapeHtml(String(val))}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function closePanel() {
+  document.getElementById('overlay').classList.remove('shown');
+  document.getElementById('panel').classList.remove('shown');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+// ============================================================
+// WIRING
+// ============================================================
+document.getElementById('search').addEventListener('input', e => {
+  searchTerm = e.target.value;
+  renderTable();
+});
+document.getElementById('clear-all').addEventListener('click', clearAll);
+document.getElementById('panel-close').addEventListener('click', closePanel);
+document.getElementById('overlay').addEventListener('click', closePanel);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+document.getElementById('stat-unused').addEventListener('click', () => {
+  setFilter('unused-only', 'Filter', 'Unused suppliers only');
+});
+document.getElementById('stat-regions').addEventListener('click', clearAll);
+document.getElementById('stat-suppliers').addEventListener('click', clearAll);
+document.getElementById('stat-relationships').addEventListener('click', clearAll);
+
+// ============================================================
+// FETCH FROM BACKEND
+// ============================================================
+async function fetchData() {
+  const refreshBtn = document.getElementById('refresh-btn');
+  const statusEl = document.getElementById('backend-status');
+
+  if (BACKEND_URL === 'https://script.google.com/macros/s/AKfycbwzXO8Sj3eSTv4VqU60Kk8tQsrYYws_-iNktXA5pIn_-B2rAtky-tSPep04C-V4-s48/exec') {
+    statusEl.innerHTML = '<span style="color:var(--red);font-weight:700;">Configuration needed:</span> set BACKEND_URL in the page source to your Apps Script /exec URL.';
+    return;
+  }
+
+  refreshBtn.disabled = true;
+  statusEl.textContent = 'Loading from Google Sheet...';
+
+  try {
+    const res = await fetch(BACKEND_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const payload = await res.json();
+    if (!payload.ok) throw new Error(payload.error || 'Backend returned not-ok');
+
+    // Apps Script returns { tabs: { Regions: [...], Suppliers: [...] } }
+    APP_DATA.regions_raw   = (payload.tabs && payload.tabs.Regions)   || [];
+    APP_DATA.suppliers_raw = (payload.tabs && payload.tabs.Suppliers) || [];
+
+    // Handle tabs that returned an error object (missing tab)
+    if (APP_DATA.regions_raw.error)   { throw new Error('Regions tab: ' + APP_DATA.regions_raw.error); }
+    if (APP_DATA.suppliers_raw.error) { throw new Error('Suppliers tab: ' + APP_DATA.suppliers_raw.error); }
+
+    lastFetchedAt = new Date(payload.fetchedAt || Date.now());
+    buildRows();
+    renderStats();
+    renderHeader();
+    renderTable();
+
+    statusEl.innerHTML = `<span style="color:var(--green);">&#10003;</span> Loaded ${APP_DATA.regions_raw.length} regions, ${APP_DATA.suppliers_raw.length} suppliers at ${lastFetchedAt.toLocaleTimeString()}`;
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;">Failed to load:</span> ${escapeHtml(String(err.message || err))}`;
+  } finally {
+    refreshBtn.disabled = false;
+  }
+}
+
+document.getElementById('refresh-btn').addEventListener('click', fetchData);
+
+// ============================================================
+// INIT
+// ============================================================
+fetchData();
+</script>
+
+</body>
+</html>
