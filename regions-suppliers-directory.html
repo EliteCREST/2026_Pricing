@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v2.2.0 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.0.0 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -428,6 +428,265 @@
     content: '–';
   }
 
+  /* ---------- MAIN TAB STRIP ---------- */
+  .main-tabs {
+    display: flex;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .main-tab {
+    flex: 1;
+    padding: 13px 18px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    transition: all 0.12s;
+    text-align: center;
+    user-select: none;
+  }
+  .main-tab:last-child { border-right: none; }
+  .main-tab:hover { background: #F1F4F9; color: var(--navy); }
+  .main-tab.active {
+    background: var(--navy);
+    color: white;
+    box-shadow: inset 0 -3px 0 var(--gold);
+  }
+  .main-tab .count {
+    background: rgba(255,255,255,0.18);
+    color: inherit;
+    margin-left: 8px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+  .main-tab:not(.active) .count {
+    background: var(--light-blue-bg);
+    color: var(--blue);
+  }
+  .main-tab.warn .count {
+    background: #FBF1DD;
+    color: var(--amber);
+  }
+  .main-tab.warn.active .count {
+    background: rgba(201,169,97,0.2);
+    color: var(--gold);
+  }
+
+  .main-pane { display: none; }
+  .main-pane.active { display: block; }
+
+  /* ---------- OVERVIEW DASHBOARD ---------- */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .dash-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 18px 20px;
+  }
+  .dash-card-full { grid-column: 1 / -1; }
+  .dash-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid var(--blue);
+  }
+  .dash-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--navy);
+  }
+  .dash-card-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Bar chart */
+  .barchart { padding: 4px 0 0; }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    cursor: pointer;
+  }
+  .bar-row:hover .bar-label { color: var(--blue); }
+  .bar-label {
+    font-size: 12px;
+    color: var(--navy);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bar-value {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .bar-track {
+    grid-column: 1 / -1;
+    height: 6px;
+    background: #EDF0F4;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--blue);
+    transition: width 0.4s ease;
+  }
+  .bar-fill.gold { background: var(--gold); }
+  .bar-fill.amber { background: var(--amber); }
+
+  /* Issues panel */
+  .issue-row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #EDF0F4;
+    align-items: center;
+  }
+  .issue-row:last-child { border-bottom: none; }
+  .issue-icon {
+    width: 36px;
+    height: 36px;
+    background: #FBF1DD;
+    color: var(--amber);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .issue-icon.red { background: #FCF2F2; color: var(--red); }
+  .issue-icon.blue { background: var(--light-blue-bg); color: var(--blue); }
+  .issue-body { display: flex; flex-direction: column; gap: 2px; }
+  .issue-title { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .issue-detail { font-size: 11px; color: var(--text-muted); }
+  .issue-action {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--navy);
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .issue-action:hover { background: var(--navy); color: white; border-color: var(--navy); }
+
+  /* Pricing grouped view */
+  .pricing-group-row { cursor: pointer; }
+  .pricing-group-row .col-name { font-weight: 700; }
+  .pricing-detail-row {
+    background: #FAFBFD;
+  }
+  .pricing-detail-row td {
+    padding: 0;
+  }
+  .pricing-detail-inner {
+    padding: 14px 20px;
+    border-left: 3px solid var(--blue);
+  }
+  .pricing-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .pricing-detail-table th {
+    background: #F1F4F9;
+    color: var(--navy);
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: static;
+  }
+  .pricing-detail-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #EDF0F4;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+  .pricing-detail-table .num { text-align: right; }
+  .expand-caret {
+    display: inline-block;
+    color: var(--blue);
+    margin-right: 8px;
+    transition: transform 0.15s;
+    font-size: 10px;
+  }
+  .pricing-group-row.expanded .expand-caret {
+    transform: rotate(90deg);
+  }
+  .price-num { font-variant-numeric: tabular-nums; }
+
+  /* Orphan banner */
+  .orphan-banner {
+    background: #FCF2F2;
+    border: 1px solid var(--red);
+    border-left: 4px solid var(--red);
+    padding: 14px 18px;
+    border-radius: 3px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+  .orphan-banner .icon {
+    font-size: 22px;
+    color: var(--red);
+  }
+  .orphan-banner .text { flex: 1; }
+  .orphan-banner .title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 2px;
+  }
+  .orphan-banner .detail {
+    font-size: 12px;
+    color: var(--navy);
+  }
+  .orphan-banner button {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .orphan-banner button:hover { background: #931F1F; }
+
   /* ---------- FOOTER ---------- */
   .footer {
     text-align: center;
@@ -452,7 +711,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v2.2.0</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.0.0</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -477,54 +736,104 @@
 
 <div class="container">
 
-  <div class="stats">
-    <div class="stat" id="stat-regions">
-      <div class="stat-label">Regions</div>
-      <div class="stat-value" id="stat-regions-count">0</div>
-      <div class="stat-sub">View one row per region</div>
-    </div>
-    <div class="stat" id="stat-suppliers">
-      <div class="stat-label">Suppliers</div>
-      <div class="stat-value" id="stat-suppliers-count">0</div>
-      <div class="stat-sub">View one row per supplier</div>
-    </div>
-    <div class="stat" id="stat-relationships">
-      <div class="stat-label">Relationships</div>
-      <div class="stat-value" id="stat-relationships-count">0</div>
-      <div class="stat-sub">View region \u2194 supplier pairs</div>
-    </div>
-    <div class="stat warn" id="stat-unused">
-      <div class="stat-label">Unused Suppliers</div>
-      <div class="stat-value" id="stat-unused-count">0</div>
-      <div class="stat-sub">Suppliers no region uses</div>
-    </div>
-  </div>
-
   <div class="backend-bar" style="background:white;border:1px solid var(--border);border-radius:3px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;font-size:12px;">
     <button id="refresh-btn" style="background:var(--blue);color:white;border:none;padding:7px 16px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-radius:3px;cursor:pointer;">Refresh from Sheet</button>
     <span id="backend-status" style="color:var(--text-muted);flex:1;">Initializing...</span>
   </div>
 
-  <div class="view-label-bar" style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px;">
-    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Viewing:</div>
-    <div id="view-label" style="font-size:15px;color:var(--navy);font-weight:700;">Region &harr; Supplier Relationships</div>
+  <!-- Main tab strip: switches between high-level sections of the page -->
+  <div class="main-tabs" role="tablist">
+    <button class="main-tab active" data-tab="overview" role="tab">Overview</button>
+    <button class="main-tab" data-tab="regions" role="tab">Regions <span class="count" id="tab-count-regions">0</span></button>
+    <button class="main-tab" data-tab="suppliers" role="tab">Suppliers <span class="count" id="tab-count-suppliers">0</span></button>
+    <button class="main-tab" data-tab="relationships" role="tab">Relationships <span class="count" id="tab-count-relationships">0</span></button>
+    <button class="main-tab" data-tab="pricing" role="tab">Pricing <span class="count" id="tab-count-pricing">0</span></button>
+    <button class="main-tab warn" data-tab="unused" role="tab">Unused <span class="count" id="tab-count-unused">0</span></button>
   </div>
 
-  <div class="search-bar">
-    <input type="search" class="search-input" id="search" placeholder="Search any column — region, supplier, city, state, branch code, phone…" autofocus>
-    <div class="filter-pills" id="filter-pills"></div>
-    <button class="clear-btn" id="clear-all">Clear All</button>
-    <div class="result-count"><strong id="result-count">0</strong> of <strong id="total-count">0</strong> shown</div>
+  <!-- ============== OVERVIEW PANE ============== -->
+  <div class="main-pane active" id="pane-overview" role="tabpanel">
+    <div class="stats">
+      <div class="stat" id="stat-regions">
+        <div class="stat-label">Regions</div>
+        <div class="stat-value" id="stat-regions-count">0</div>
+        <div class="stat-sub">View one row per region</div>
+      </div>
+      <div class="stat" id="stat-suppliers">
+        <div class="stat-label">Suppliers</div>
+        <div class="stat-value" id="stat-suppliers-count">0</div>
+        <div class="stat-sub">View one row per supplier</div>
+      </div>
+      <div class="stat" id="stat-relationships">
+        <div class="stat-label">Relationships</div>
+        <div class="stat-value" id="stat-relationships-count">0</div>
+        <div class="stat-sub">View region &harr; supplier pairs</div>
+      </div>
+      <div class="stat warn" id="stat-unused">
+        <div class="stat-label">Unused Suppliers</div>
+        <div class="stat-value" id="stat-unused-count">0</div>
+        <div class="stat-sub">Suppliers no region uses</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div class="dash-card-title">Top Regions by Pricing Activity</div>
+          <div class="dash-card-sub">Where pricing actually happens</div>
+        </div>
+        <div class="barchart" id="chart-top-regions">
+          <div style="color:var(--text-muted);font-size:12px;padding:20px 0;text-align:center;">Loading...</div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div class="dash-card-title">Top Suppliers by Pricing Activity</div>
+          <div class="dash-card-sub">Most-priced supplier branches</div>
+        </div>
+        <div class="barchart" id="chart-top-suppliers">
+          <div style="color:var(--text-muted);font-size:12px;padding:20px 0;text-align:center;">Loading...</div>
+        </div>
+      </div>
+
+      <div class="dash-card dash-card-full">
+        <div class="dash-card-header">
+          <div class="dash-card-title">Issues Found</div>
+          <div class="dash-card-sub">Data hygiene findings</div>
+        </div>
+        <div id="issues-panel">
+          <div style="color:var(--text-muted);font-size:12px;padding:20px 0;text-align:center;">Analyzing data...</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="table-wrap">
-    <div class="table-scroll">
-      <table id="grid">
-        <thead>
-          <tr id="grid-header"></tr>
-        </thead>
-        <tbody id="grid-body"></tbody>
-      </table>
+  <!-- ============== DATA PANES (Regions, Suppliers, Relationships, Unused, Pricing) ============== -->
+  <div class="main-pane" id="pane-data" role="tabpanel">
+    <div class="view-label-bar" style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Viewing:</div>
+      <div id="view-label" style="font-size:15px;color:var(--navy);font-weight:700;">Region &harr; Supplier Relationships</div>
+    </div>
+
+    <div id="orphan-banner-host"></div>
+
+    <div class="search-bar">
+      <input type="search" class="search-input" id="search" placeholder="Search any column…">
+      <div class="filter-pills" id="filter-pills"></div>
+      <button class="clear-btn" id="clear-all">Clear All</button>
+      <div class="result-count"><strong id="result-count">0</strong> of <strong id="total-count">0</strong> shown</div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="grid">
+          <thead>
+            <tr id="grid-header"></tr>
+          </thead>
+          <tbody id="grid-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -566,6 +875,7 @@ let lastFetchedAt = null;
 // - regions:       one row per region, with supplier_count summary
 // - suppliers:     one row per supplier, with region_count summary
 // - unused:        one row per supplier with no region using it
+// - pricing:       one row per (region, supplier) pricing group, expandable
 const COLUMNS_BY_VIEW = {
   relationships: [
     { key: 'region_name',         label: 'Region' },
@@ -585,6 +895,7 @@ const COLUMNS_BY_VIEW = {
     { key: 'region_address',      label: 'Address' },
     { key: 'region_sales_tax',    label: 'Sales Tax' },
     { key: 'supplier_count',      label: 'Suppliers' },
+    { key: 'pricing_count',       label: 'Prices on File' },
     { key: 'region_is_archived',  label: 'Archived' },
   ],
   suppliers: [
@@ -595,6 +906,7 @@ const COLUMNS_BY_VIEW = {
     { key: 'supplier_phone',      label: 'Phone' },
     { key: 'supplier_email',      label: 'Order Email' },
     { key: 'region_count',        label: 'Used By Regions' },
+    { key: 'pricing_count',       label: 'Prices on File' },
     { key: 'supplier_is_active',  label: 'Active' },
   ],
   unused: [
@@ -606,14 +918,30 @@ const COLUMNS_BY_VIEW = {
     { key: 'supplier_email',      label: 'Order Email' },
     { key: 'supplier_is_active',  label: 'Active' },
   ],
+  pricing: [
+    { key: 'region_name',         label: 'Region' },
+    { key: 'supplier_name',       label: 'Supplier' },
+    { key: 'supplier_city_state', label: 'Supplier Location' },
+    { key: 'price_count',         label: 'Prices' },
+    { key: 'unique_products',     label: 'Unique Products' },
+    { key: 'price_min',           label: 'Min Price' },
+    { key: 'price_max',           label: 'Max Price' },
+    { key: 'price_avg',           label: 'Avg Price' },
+    { key: 'uoms_used',           label: 'UOMs' },
+  ],
 };
 
-// Default sort per view -- relationships sorts by region, regions/suppliers by name
+// Default sort per view -- relationships sorts by region, regions/suppliers by name,
+// pricing by count desc so big sets are at the top
 const DEFAULT_SORT_BY_VIEW = {
   relationships: 'region_name',
   regions:       'region_name',
   suppliers:     'supplier_name',
   unused:        'supplier_name',
+  pricing:       'price_count',
+};
+const DEFAULT_SORT_ASC_BY_VIEW = {
+  pricing: false,  // big counts first
 };
 
 // Fields shown in the side panel for a region (in order). Bookkeeping fields go in a collapsible group.
@@ -696,6 +1024,48 @@ function buildRows() {
     regionsPerSupplier[rel.supplier_id] = (regionsPerSupplier[rel.supplier_id] || 0) + 1;
   }
 
+  // ---- Pricing aggregation ----
+  // Bucket pricing rows by (regionId, supplierId) for the Pricing view.
+  // Each bucket carries the row list + stats (min/max/avg, unique products, UOMs).
+  // Rows whose RegionId doesn't exist in Regions are captured separately as orphans.
+  pricingByPair = {};
+  pricingOrphans = [];
+  const pricingPerRegion = {};
+  const pricingPerSupplier = {};
+
+  for (const p of (APP_DATA.pricing_raw || [])) {
+    if (!p) continue;
+    const rid = p.RegionId, sid = p.SupplierLocationId;
+    if (!rid || !sid) continue;
+    if (!regionsById[rid]) {
+      pricingOrphans.push(p);
+      continue;
+    }
+    if (!suppliersById[sid]) continue;
+
+    pricingPerRegion[rid]   = (pricingPerRegion[rid]   || 0) + 1;
+    pricingPerSupplier[sid] = (pricingPerSupplier[sid] || 0) + 1;
+
+    const key = rid + '|' + sid;
+    if (!pricingByPair[key]) {
+      pricingByPair[key] = {
+        regionId: rid, supplierId: sid,
+        rows: [], priceSum: 0, priceMin: Infinity, priceMax: -Infinity,
+        productSet: new Set(), uomSet: new Set(),
+      };
+    }
+    const bucket = pricingByPair[key];
+    bucket.rows.push(p);
+    const price = Number(p.Price);
+    if (!isNaN(price)) {
+      bucket.priceSum += price;
+      if (price < bucket.priceMin) bucket.priceMin = price;
+      if (price > bucket.priceMax) bucket.priceMax = price;
+    }
+    if (p.ProductId) bucket.productSet.add(p.ProductId);
+    if (p.Uom) bucket.uomSet.add(p.Uom);
+  }
+
   // ---- relationships view: one row per region-supplier pair ----
   ROWS_BY_VIEW.relationships = relationships.map(rel => {
     const r = regionsById[rel.region_id] || {};
@@ -728,6 +1098,7 @@ function buildRows() {
     region_sales_tax:    r.SalesTax != null ? (Number(r.SalesTax) * 100).toFixed(2) + '%' : '',
     region_is_archived:  r.IsArchived === true ? 'Yes' : 'No',
     supplier_count:      suppliersPerRegion[r.Id] || 0,
+    pricing_count:       pricingPerRegion[r.Id] || 0,
     _region:             r,
     _supplier:           null,
     _unused:             false,
@@ -746,6 +1117,7 @@ function buildRows() {
       supplier_email:      pickField(s, 'OrderEmail'),
       supplier_is_active:  s.IsActive === true ? 'Yes' : (s.IsActive === false ? 'No' : ''),
       region_count:        regionsPerSupplier[s.Id] || 0,
+      pricing_count:       pricingPerSupplier[s.Id] || 0,
       _region:             null,
       _supplier:           s,
       _unused:             isUnused,
@@ -754,6 +1126,31 @@ function buildRows() {
 
   // ---- unused view: suppliers that no region references ----
   ROWS_BY_VIEW.unused = ROWS_BY_VIEW.suppliers.filter(row => row._unused);
+
+  // ---- pricing view: one row per (region, supplier) pricing group ----
+  ROWS_BY_VIEW.pricing = Object.values(pricingByPair).map(bucket => {
+    const r = regionsById[bucket.regionId] || {};
+    const s = suppliersById[bucket.supplierId] || {};
+    const count = bucket.rows.length;
+    const avg = count > 0 ? bucket.priceSum / count : 0;
+    return {
+      pair_key:            bucket.regionId + '|' + bucket.supplierId,
+      region_id:           bucket.regionId,
+      supplier_id:         bucket.supplierId,
+      region_name:         pickField(r, 'Name'),
+      supplier_name:       pickField(s, 'Name'),
+      supplier_city_state: [pickField(s, 'City'), pickField(s, 'State')].filter(Boolean).join(', '),
+      price_count:         count,
+      unique_products:     bucket.productSet.size,
+      price_min:           bucket.priceMin === Infinity ? '' : '$' + bucket.priceMin.toFixed(2),
+      price_max:           bucket.priceMax === -Infinity ? '' : '$' + bucket.priceMax.toFixed(2),
+      price_avg:           count > 0 ? '$' + avg.toFixed(2) : '',
+      uoms_used:           Array.from(bucket.uomSet).sort().join(', '),
+      _pricing_rows:       bucket.rows,
+      _region:             r,
+      _supplier:           s,
+    };
+  });
 
   // Pre-compute search blob for each row in each view
   for (const view in ROWS_BY_VIEW) {
@@ -767,8 +1164,11 @@ function buildRows() {
 // ============================================================
 // STATE
 // ============================================================
-let viewMode = 'relationships';                         // 'relationships' | 'regions' | 'suppliers' | 'unused'
-let ROWS_BY_VIEW = { relationships: [], regions: [], suppliers: [], unused: [] };
+let mainTab = 'overview';     // 'overview' | 'regions' | 'suppliers' | 'relationships' | 'pricing' | 'unused'
+let viewMode = 'relationships';   // which data shape the data pane shows
+let ROWS_BY_VIEW = { relationships: [], regions: [], suppliers: [], unused: [], pricing: [] };
+let pricingByPair = {};       // "regionId|supplierId" -> { rows: [], stats: {} }
+let pricingOrphans = [];      // pricing rows whose RegionId isn't in Regions sheet
 let searchTerm = '';
 let activeFilters = [];   // [{type:'region'|'supplier', value:'...'}]
 let sortKey = 'region_name';
@@ -782,14 +1182,263 @@ function activeColumns() { return COLUMNS_BY_VIEW[viewMode] || []; }
 // RENDER
 // ============================================================
 function renderStats() {
-  document.getElementById('stat-regions-count').textContent = Object.keys(APP_DATA.regions).length.toLocaleString();
-  document.getElementById('stat-suppliers-count').textContent = Object.keys(APP_DATA.suppliers).length.toLocaleString();
-  document.getElementById('stat-relationships-count').textContent = APP_DATA.relationships.length.toLocaleString();
-  const unused = Object.keys(APP_DATA.suppliers).length - usedSupplierIds.size;
-  document.getElementById('stat-unused-count').textContent = unused.toLocaleString();
+  const regionCount   = Object.keys(APP_DATA.regions).length;
+  const supplierCount = Object.keys(APP_DATA.suppliers).length;
+  const relCount      = APP_DATA.relationships.length;
+  const unusedCount   = supplierCount - usedSupplierIds.size;
+  const pricingPairCount = ROWS_BY_VIEW.pricing.length;
+
+  document.getElementById('stat-regions-count').textContent = regionCount.toLocaleString();
+  document.getElementById('stat-suppliers-count').textContent = supplierCount.toLocaleString();
+  document.getElementById('stat-relationships-count').textContent = relCount.toLocaleString();
+  document.getElementById('stat-unused-count').textContent = unusedCount.toLocaleString();
+
+  // Main tab strip badges
+  document.getElementById('tab-count-regions').textContent       = regionCount.toLocaleString();
+  document.getElementById('tab-count-suppliers').textContent     = supplierCount.toLocaleString();
+  document.getElementById('tab-count-relationships').textContent = relCount.toLocaleString();
+  document.getElementById('tab-count-pricing').textContent       = pricingPairCount.toLocaleString();
+  document.getElementById('tab-count-unused').textContent        = unusedCount.toLocaleString();
 }
 
-function renderHeader() {
+// ============================================================
+// DASHBOARD (Overview tab content)
+// ============================================================
+function renderDashboard() {
+  renderTopRegionsChart();
+  renderTopSuppliersChart();
+  renderIssuesPanel();
+}
+
+function renderTopRegionsChart() {
+  const host = document.getElementById('chart-top-regions');
+  host.innerHTML = '';
+  const rows = ROWS_BY_VIEW.regions
+    .filter(r => r.pricing_count > 0)
+    .sort((a, b) => b.pricing_count - a.pricing_count)
+    .slice(0, 8);
+  if (rows.length === 0) {
+    host.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:20px 0;text-align:center;">No pricing data loaded.</div>';
+    return;
+  }
+  const max = rows[0].pricing_count;
+  const totalPricing = (APP_DATA.pricing_raw || []).length;
+  for (const r of rows) {
+    const pct = (r.pricing_count / max) * 100;
+    const share = totalPricing > 0 ? (r.pricing_count / totalPricing * 100).toFixed(1) : '0';
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${escapeHtml(r.region_name)}</div>
+      <div class="bar-value">${r.pricing_count.toLocaleString()} prices &middot; ${share}%</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+    `;
+    row.addEventListener('click', () => {
+      switchMainTab('pricing');
+      searchTerm = r.region_name;
+      document.getElementById('search').value = r.region_name;
+      renderTable();
+    });
+    host.appendChild(row);
+  }
+}
+
+function renderTopSuppliersChart() {
+  const host = document.getElementById('chart-top-suppliers');
+  host.innerHTML = '';
+  const rows = ROWS_BY_VIEW.suppliers
+    .filter(r => r.pricing_count > 0)
+    .sort((a, b) => b.pricing_count - a.pricing_count)
+    .slice(0, 8);
+  if (rows.length === 0) {
+    host.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:20px 0;text-align:center;">No pricing data loaded.</div>';
+    return;
+  }
+  const max = rows[0].pricing_count;
+  const totalPricing = (APP_DATA.pricing_raw || []).length;
+  for (const r of rows) {
+    const pct = (r.pricing_count / max) * 100;
+    const share = totalPricing > 0 ? (r.pricing_count / totalPricing * 100).toFixed(1) : '0';
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${escapeHtml(r.supplier_name)}</div>
+      <div class="bar-value">${r.pricing_count.toLocaleString()} prices &middot; ${share}%</div>
+      <div class="bar-track"><div class="bar-fill gold" style="width:${pct}%"></div></div>
+    `;
+    row.addEventListener('click', () => {
+      switchMainTab('pricing');
+      searchTerm = r.supplier_name;
+      document.getElementById('search').value = r.supplier_name;
+      renderTable();
+    });
+    host.appendChild(row);
+  }
+}
+
+function renderIssuesPanel() {
+  const host = document.getElementById('issues-panel');
+  host.innerHTML = '';
+
+  const issues = [];
+
+  // Orphaned pricing rows
+  if (pricingOrphans.length > 0) {
+    const orphanRegionIds = new Set(pricingOrphans.map(p => p.RegionId));
+    issues.push({
+      cls: 'red',
+      icon: '!',
+      title: `${pricingOrphans.length.toLocaleString()} pricing rows reference regions that don't exist`,
+      detail: `${orphanRegionIds.size} distinct RegionId values in pricing are missing from the Regions tab. Likely deleted or archived regions that still have live pricing attached.`,
+      actionLabel: 'View',
+      onAction: () => switchMainTab('pricing'),
+    });
+  }
+
+  // Configured suppliers with no pricing
+  const configuredSupplierIds = new Set();
+  for (const rel of APP_DATA.relationships) configuredSupplierIds.add(rel.supplier_id);
+  let configuredButNoPricing = 0;
+  for (const s of Object.values(APP_DATA.suppliers)) {
+    if (configuredSupplierIds.has(s.Id)) {
+      const supRow = ROWS_BY_VIEW.suppliers.find(r => r.supplier_id === s.Id);
+      if (supRow && supRow.pricing_count === 0) configuredButNoPricing++;
+    }
+  }
+  if (configuredButNoPricing > 0) {
+    issues.push({
+      cls: '',
+      icon: '?',
+      title: `${configuredButNoPricing} suppliers are configured but have no pricing on file`,
+      detail: 'Regions list these suppliers as available but no prices have been entered. Orders to these suppliers will lack pricing data.',
+      actionLabel: 'View Suppliers',
+      onAction: () => switchMainTab('suppliers'),
+    });
+  }
+
+  // Unused suppliers
+  const unusedCount = Object.keys(APP_DATA.suppliers).length - usedSupplierIds.size;
+  if (unusedCount > 0) {
+    issues.push({
+      cls: '',
+      icon: '\u2205',
+      title: `${unusedCount} suppliers in the system are not used by any region`,
+      detail: 'These supplier records exist but no region is configured to use them. Candidates for archive or cleanup.',
+      actionLabel: 'View Unused',
+      onAction: () => switchMainTab('unused'),
+    });
+  }
+
+  // Inactive suppliers with pricing
+  let inactiveWithPricing = 0;
+  for (const s of Object.values(APP_DATA.suppliers)) {
+    if (s.IsActive === false) {
+      const supRow = ROWS_BY_VIEW.suppliers.find(r => r.supplier_id === s.Id);
+      if (supRow && supRow.pricing_count > 0) inactiveWithPricing++;
+    }
+  }
+  if (inactiveWithPricing > 0) {
+    issues.push({
+      cls: 'red',
+      icon: '!',
+      title: `${inactiveWithPricing} inactive suppliers still have pricing data`,
+      detail: 'Suppliers marked IsActive=false but pricing rows still reference them. Stale data that may surface to users.',
+      actionLabel: 'View Suppliers',
+      onAction: () => switchMainTab('suppliers'),
+    });
+  }
+
+  if (issues.length === 0) {
+    host.innerHTML = '<div style="color:var(--green);font-size:13px;padding:20px 0;text-align:center;font-weight:700;">\u2713 No data issues detected.</div>';
+    return;
+  }
+
+  for (const issue of issues) {
+    const row = document.createElement('div');
+    row.className = 'issue-row';
+    row.innerHTML = `
+      <div class="issue-icon ${issue.cls}">${issue.icon}</div>
+      <div class="issue-body">
+        <div class="issue-title">${escapeHtml(issue.title)}</div>
+        <div class="issue-detail">${escapeHtml(issue.detail)}</div>
+      </div>
+    `;
+    if (issue.onAction) {
+      const btn = document.createElement('button');
+      btn.className = 'issue-action';
+      btn.textContent = issue.actionLabel;
+      btn.addEventListener('click', issue.onAction);
+      row.appendChild(btn);
+    }
+    host.appendChild(row);
+  }
+}
+
+function renderOrphanBanner() {
+  const host = document.getElementById('orphan-banner-host');
+  host.innerHTML = '';
+  if (viewMode !== 'pricing' || pricingOrphans.length === 0) return;
+  const distinctRegions = new Set(pricingOrphans.map(p => p.RegionId)).size;
+  const banner = document.createElement('div');
+  banner.className = 'orphan-banner';
+  banner.innerHTML = `
+    <div class="icon">\u26A0</div>
+    <div class="text">
+      <div class="title">Orphaned pricing data found</div>
+      <div class="detail">${pricingOrphans.length.toLocaleString()} pricing rows reference ${distinctRegions} RegionId${distinctRegions === 1 ? '' : 's'} that don't exist in the Regions sheet. These rows are <strong>excluded</strong> from the groups below.</div>
+    </div>
+  `;
+  host.appendChild(banner);
+}
+
+// Toggle expansion of a pricing group row to show individual prices
+function togglePricingRow(tr, row) {
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains('pricing-detail-row')) {
+    next.remove();
+    tr.classList.remove('expanded');
+    return;
+  }
+  tr.classList.add('expanded');
+  const detailTr = document.createElement('tr');
+  detailTr.className = 'pricing-detail-row';
+  const detailTd = document.createElement('td');
+  detailTd.colSpan = activeColumns().length;
+  const showRows = row._pricing_rows.slice(0, 200);   // cap display at 200 to keep DOM lean
+  const truncated = row._pricing_rows.length > 200;
+  let detailHtml = `
+    <div class="pricing-detail-inner">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">
+        Showing <strong>${showRows.length.toLocaleString()}</strong> of <strong>${row._pricing_rows.length.toLocaleString()}</strong> individual prices${truncated ? ' (capped at 200)' : ''}
+      </div>
+      <table class="pricing-detail-table">
+        <thead>
+          <tr>
+            <th>ProductId</th>
+            <th>UOM</th>
+            <th class="num">Price</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  for (const p of showRows) {
+    const updated = p.UpdatedAt ? new Date(p.UpdatedAt).toLocaleDateString() : '';
+    const price = p.Price != null ? '$' + Number(p.Price).toFixed(2) : '';
+    detailHtml += `
+      <tr>
+        <td>${escapeHtml(p.ProductId || '')}</td>
+        <td>${escapeHtml(p.Uom || '')}</td>
+        <td class="num price-num">${price}</td>
+        <td>${updated}</td>
+      </tr>
+    `;
+  }
+  detailHtml += `</tbody></table></div>`;
+  detailTd.innerHTML = detailHtml;
+  detailTr.appendChild(detailTd);
+  tr.parentNode.insertBefore(detailTr, tr.nextSibling);
+}
   const tr = document.getElementById('grid-header');
   tr.innerHTML = '';
   for (const col of activeColumns()) {
@@ -878,18 +1527,27 @@ function renderTable() {
     const cols = activeColumns();
     for (const row of filtered) {
       const tr = document.createElement('tr');
-      tr.className = 'row' + (row._unused ? ' unused' : '');
+      tr.className = 'row' + (row._unused ? ' unused' : '') + (viewMode === 'pricing' ? ' pricing-group-row' : '');
+      let firstCellRendered = false;
       for (const col of cols) {
         const td = document.createElement('td');
         const val = row[col.key] == null ? '' : row[col.key];
+        // Add an expand caret to the first cell of pricing-view rows so users see it's expandable
+        if (viewMode === 'pricing' && !firstCellRendered) {
+          const caret = document.createElement('span');
+          caret.className = 'expand-caret';
+          caret.textContent = '\u25B6';
+          td.appendChild(caret);
+          firstCellRendered = true;
+        }
         if (col.key === 'region_name' && val) {
           const a = document.createElement('a');
           a.className = 'clickable col-name';
           a.textContent = val;
           a.addEventListener('click', e => {
             e.stopPropagation();
-            // From regions view -> switch to relationships filtered to this region
-            switchView('relationships');
+            if (viewMode === 'pricing') return;  // in pricing view, name isn't a drill-down link
+            switchMainTab('relationships');
             setFilter('region', 'Region', val);
           });
           td.appendChild(a);
@@ -899,7 +1557,8 @@ function renderTable() {
           a.textContent = val;
           a.addEventListener('click', e => {
             e.stopPropagation();
-            switchView('relationships');
+            if (viewMode === 'pricing') return;
+            switchMainTab('relationships');
             setFilter('supplier', 'Supplier', val);
           });
           td.appendChild(a);
@@ -923,12 +1582,19 @@ function renderTable() {
           a.className = 'clickable';
           a.addEventListener('click', e => e.stopPropagation());
           td.appendChild(a);
+        } else if (typeof val === 'number') {
+          td.textContent = val.toLocaleString();
+          td.className = 'num';
         } else {
           td.textContent = val;
         }
         tr.appendChild(td);
       }
-      tr.addEventListener('click', () => openPanel(row));
+      if (viewMode === 'pricing') {
+        tr.addEventListener('click', () => togglePricingRow(tr, row));
+      } else {
+        tr.addEventListener('click', () => openPanel(row));
+      }
       tbody.appendChild(tr);
     }
   }
@@ -943,18 +1609,23 @@ function renderTable() {
 function switchView(newView) {
   if (!ROWS_BY_VIEW[newView]) return;
   viewMode = newView;
-  activeFilters = [];           // pills are only meaningful in relationships view
+  activeFilters = [];
   sortKey = DEFAULT_SORT_BY_VIEW[newView];
-  sortAsc = true;
-  // Update active card visual + table caption
+  sortAsc = DEFAULT_SORT_ASC_BY_VIEW.hasOwnProperty(newView) ? DEFAULT_SORT_ASC_BY_VIEW[newView] : true;
+
+  // Update stat card highlight (overview only)
   document.querySelectorAll('.stat').forEach(c => c.classList.remove('active-view'));
-  const card = document.getElementById('stat-' + (newView === 'relationships' ? 'relationships' : newView));
+  const card = document.getElementById('stat-' + newView);
   if (card) card.classList.add('active-view');
+
   document.getElementById('view-label').textContent = VIEW_LABELS[newView] || '';
+
+  // Show orphan banner only on pricing view, and only if orphans exist
+  renderOrphanBanner();
+
   renderFilters();
   renderHeader();
   renderTable();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 const VIEW_LABELS = {
@@ -962,7 +1633,28 @@ const VIEW_LABELS = {
   regions:       'Regions',
   suppliers:     'Suppliers',
   unused:        'Unused Suppliers',
+  pricing:       'Pricing — Region \u2194 Supplier Groups',
 };
+
+// ============================================================
+// MAIN TAB SWITCHING
+// ============================================================
+function switchMainTab(name) {
+  mainTab = name;
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  // Overview pane has special handling; everything else shows the data pane with the matching view
+  const overviewPane = document.getElementById('pane-overview');
+  const dataPane     = document.getElementById('pane-data');
+  if (name === 'overview') {
+    overviewPane.classList.add('active');
+    dataPane.classList.remove('active');
+  } else {
+    overviewPane.classList.remove('active');
+    dataPane.classList.add('active');
+    switchView(name);  // 'regions' | 'suppliers' | 'relationships' | 'pricing' | 'unused'
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 // ============================================================
 // FILTERS
@@ -1080,10 +1772,15 @@ document.getElementById('overlay').addEventListener('click', closePanel);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closePanel();
 });
-document.getElementById('stat-regions').addEventListener('click',       () => switchView('regions'));
-document.getElementById('stat-suppliers').addEventListener('click',     () => switchView('suppliers'));
-document.getElementById('stat-relationships').addEventListener('click', () => switchView('relationships'));
-document.getElementById('stat-unused').addEventListener('click',        () => switchView('unused'));
+document.getElementById('stat-regions').addEventListener('click',       () => switchMainTab('regions'));
+document.getElementById('stat-suppliers').addEventListener('click',     () => switchMainTab('suppliers'));
+document.getElementById('stat-relationships').addEventListener('click', () => switchMainTab('relationships'));
+document.getElementById('stat-unused').addEventListener('click',        () => switchMainTab('unused'));
+
+// Main tab strip
+document.querySelectorAll('.main-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchMainTab(tab.dataset.tab));
+});
 
 // Settings menu toggle
 (function() {
@@ -1129,20 +1826,26 @@ async function fetchData() {
     const payload = await res.json();
     if (!payload.ok) throw new Error(payload.error || 'Backend returned not-ok');
 
-    // Apps Script returns { tabs: { Regions: [...], Suppliers: [...] } }
+    // Apps Script returns { tabs: { Regions: [...], Suppliers: [...], Pricing: [...] } }
     APP_DATA.regions_raw   = (payload.tabs && payload.tabs.Regions)   || [];
     APP_DATA.suppliers_raw = (payload.tabs && payload.tabs.Suppliers) || [];
+    APP_DATA.pricing_raw   = (payload.tabs && payload.tabs.Pricing)   || [];
 
     // Handle tabs that returned an error object (missing tab)
     if (APP_DATA.regions_raw.error)   { throw new Error('Regions tab: ' + APP_DATA.regions_raw.error); }
     if (APP_DATA.suppliers_raw.error) { throw new Error('Suppliers tab: ' + APP_DATA.suppliers_raw.error); }
+    // Pricing is allowed to be missing or empty -- just produces no pricing rows.
 
     lastFetchedAt = new Date(payload.fetchedAt || Date.now());
     buildRows();
     renderStats();
+    renderDashboard();
     switchView(viewMode);   // sets active card highlight + renders header & table
 
-    statusEl.innerHTML = `<span style="color:var(--green);">&#10003;</span> Loaded ${APP_DATA.regions_raw.length} regions, ${APP_DATA.suppliers_raw.length} suppliers at ${lastFetchedAt.toLocaleTimeString()}`;
+    const pricingMsg = APP_DATA.pricing_raw && APP_DATA.pricing_raw.length
+      ? `, ${APP_DATA.pricing_raw.length.toLocaleString()} prices`
+      : '';
+    statusEl.innerHTML = `<span style="color:var(--green);">&#10003;</span> Loaded ${APP_DATA.regions_raw.length} regions, ${APP_DATA.suppliers_raw.length} suppliers${pricingMsg} at ${lastFetchedAt.toLocaleTimeString()}`;
   } catch (err) {
     statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;">Failed to load:</span> ${escapeHtml(String(err.message || err))}`;
   } finally {
