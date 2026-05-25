@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.3.1 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.3.2 | ECS Brands</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -975,7 +976,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.1</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.2</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -2949,6 +2950,13 @@ function exportAsCSV(headers, data, filename) {
 }
 
 function exportAsXLSX(headers, data, filename) {
+  // Sanity check: SheetJS is required. If the CDN load failed (no internet,
+  // CDN blocked, etc.), tell the user clearly instead of silently doing nothing.
+  if (typeof XLSX === 'undefined' || !XLSX.utils || !XLSX.writeFile) {
+    alert('Excel export library is not loaded. Check your internet connection and reload the page. (You can use CSV export in the meantime — it works without the library.)');
+    return;
+  }
+
   // SheetJS auto-detects cell types and will silently coerce strings like "004"
   // to the number 4, destroying leading zeros. To prevent this, build the sheet
   // cell-by-cell and explicitly set type 's' (string) on every string value,
