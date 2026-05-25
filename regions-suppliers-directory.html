@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.3.3 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.3.4 | ECS Brands</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
@@ -976,7 +976,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.3</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.4</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -2574,7 +2574,7 @@ const REPORT_SOURCES = {
       { key: 'RegionId',       label: 'RegionId' },
       { key: 'SupplierLocationId', label: 'SupplierLocationId' },
     ],
-    defaultColumns: ['Region_Name','Region_State','Supplier_Name','Supplier_City','Supplier_State','RegionId','SupplierLocationId'],
+    defaultColumns: ['Region_Name','RegionId','Region_State','Supplier_Name','SupplierLocationId','Supplier_City','Supplier_State'],
     build: () => (APP_DATA.relationships || []).map(rel => {
       const r = APP_DATA.regions[rel.region_id] || {};
       const s = APP_DATA.suppliers[rel.supplier_id] || {};
