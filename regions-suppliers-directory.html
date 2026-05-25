@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.2.0 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.3.0 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -720,6 +720,237 @@
   }
   .orphan-banner button:hover { background: #931F1F; }
 
+  /* ---------- REPORTS TAB ---------- */
+  .reports-shell {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+    margin-top: 0;
+  }
+  @media (max-width: 980px) {
+    .reports-shell { grid-template-columns: 1fr; }
+  }
+  .reports-sidebar, .reports-main {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+  }
+  .reports-section {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .reports-section:last-child { border-bottom: none; }
+  .reports-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--navy);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--blue);
+  }
+  .reports-source-picker {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    background: white;
+  }
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 1fr 28px;
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .filter-row select, .filter-row input {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: var(--navy);
+    background: white;
+    min-width: 0;
+  }
+  .filter-row .remove-filter {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--red);
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .filter-row .remove-filter:hover { background: #FCF2F2; }
+  .filter-row.between-row { grid-template-columns: 1fr 110px 1fr 1fr 28px; }
+  .filter-row.between-row .between-sep { text-align: center; color: var(--text-muted); font-size: 11px; }
+  .add-filter-btn {
+    background: var(--light-blue-bg);
+    border: 1px dashed var(--blue);
+    color: var(--blue);
+    padding: 6px 12px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 3px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .add-filter-btn:hover { background: #DFEBFA; }
+
+  .reports-action-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .reports-action-bar .count-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .reports-action-bar .count-label strong { color: var(--navy); font-weight: 700; }
+  .reports-action-bar button {
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--navy);
+    font-family: Arial, sans-serif;
+  }
+  .reports-action-bar button:hover { background: #F1F4F9; }
+  .reports-action-bar button.primary { background: var(--blue); color: white; border-color: var(--blue); }
+  .reports-action-bar button.primary:hover { background: #174787; }
+  .reports-action-bar button.gold { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+  .reports-action-bar button.gold:hover { background: #B0913F; color: white; border-color: #B0913F; }
+
+  .reports-save-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .reports-save-row input {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  .reports-save-row button {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    padding: 0 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .reports-save-row button:hover { background: #B0913F; color: white; }
+
+  .saved-report {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 4px;
+    background: white;
+  }
+  .saved-report .name {
+    font-size: 12px;
+    color: var(--navy);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .saved-report .name:hover { color: var(--blue); }
+  .saved-report .meta {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .saved-report .delete-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+  .empty-saved {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-style: italic;
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  .reports-results-wrap {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    background: white;
+  }
+  .reports-results-scroll { max-height: 60vh; overflow: auto; }
+  .reports-results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .reports-results-table th {
+    background: var(--navy);
+    color: white;
+    text-align: left;
+    padding: 9px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .reports-results-table th:hover { background: #2A3A5C; }
+  .reports-results-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #EDF0F4;
+    vertical-align: top;
+  }
+  .reports-results-table tr:hover td { background: var(--light-blue-bg); }
+  .reports-empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .reports-empty-state .big {
+    font-size: 18px;
+    color: var(--navy);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
   /* ---------- FOOTER ---------- */
   .footer {
     text-align: center;
@@ -744,7 +975,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.2.0</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.0</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -783,6 +1014,7 @@
     <button class="main-tab" data-tab="products" role="tab">Products <span class="count" id="tab-count-products">0</span></button>
     <button class="main-tab" data-tab="pricing" role="tab">Pricing <span class="count" id="tab-count-pricing">0</span></button>
     <button class="main-tab warn" data-tab="unused" role="tab">Unused <span class="count" id="tab-count-unused">0</span></button>
+    <button class="main-tab" data-tab="reports" role="tab">Reports</button>
   </div>
 
   <!-- ============== OVERVIEW PANE ============== -->
@@ -867,6 +1099,77 @@
           </thead>
           <tbody id="grid-body"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== REPORTS PANE ============== -->
+  <div class="main-pane" id="pane-reports" role="tabpanel">
+    <div class="reports-shell">
+      <div class="reports-sidebar">
+
+        <div class="reports-section">
+          <div class="reports-section-title">Data Source</div>
+          <select class="reports-source-picker" id="reports-source">
+            <option value="pricing">Pricing rows (flat)</option>
+            <option value="products">Products</option>
+            <option value="regions">Regions</option>
+            <option value="suppliers">Suppliers</option>
+            <option value="relationships">Region-Supplier pairs</option>
+          </select>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+            Pricing rows includes joined product, region, and supplier info.
+          </div>
+        </div>
+
+        <div class="reports-section">
+          <div class="reports-section-title">Filters</div>
+          <div id="reports-filters"></div>
+          <button class="add-filter-btn" id="add-filter-btn">+ Add Filter</button>
+        </div>
+
+        <div class="reports-section">
+          <div class="reports-section-title">Save Current Report</div>
+          <div class="reports-save-row">
+            <input type="text" id="report-name" placeholder="Report name…">
+            <button id="save-report-btn">Save</button>
+          </div>
+        </div>
+
+        <div class="reports-section">
+          <div class="reports-section-title">Saved Reports</div>
+          <div id="saved-reports-list">
+            <div class="empty-saved">No saved reports yet.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="reports-main">
+        <div class="reports-section">
+          <div class="reports-action-bar">
+            <button class="primary" id="run-report-btn">Run Report</button>
+            <button id="clear-filters-btn">Clear Filters</button>
+            <button class="gold" id="export-csv-btn">Export CSV</button>
+            <button class="gold" id="export-xlsx-btn">Export Excel</button>
+            <div class="count-label"><strong id="report-result-count">0</strong> rows</div>
+          </div>
+          <div class="reports-results-wrap">
+            <div class="reports-results-scroll">
+              <table class="reports-results-table" id="reports-results-table">
+                <thead><tr id="reports-results-header"></tr></thead>
+                <tbody id="reports-results-body">
+                  <tr><td>
+                    <div class="reports-empty-state">
+                      <div class="big">Build a report</div>
+                      <div>Pick a data source, add filters, click Run Report.</div>
+                    </div>
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1948,16 +2251,21 @@ const VIEW_LABELS = {
 function switchMainTab(name) {
   mainTab = name;
   document.querySelectorAll('.main-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  // Overview pane has special handling; everything else shows the data pane with the matching view
+  // Overview and Reports panes have special handling; all other tabs share the data pane.
   const overviewPane = document.getElementById('pane-overview');
   const dataPane     = document.getElementById('pane-data');
+  const reportsPane  = document.getElementById('pane-reports');
+  overviewPane.classList.remove('active');
+  dataPane.classList.remove('active');
+  reportsPane.classList.remove('active');
   if (name === 'overview') {
     overviewPane.classList.add('active');
-    dataPane.classList.remove('active');
+  } else if (name === 'reports') {
+    reportsPane.classList.add('active');
+    initReportsTabIfNeeded();
   } else {
-    overviewPane.classList.remove('active');
     dataPane.classList.add('active');
-    switchView(name);  // 'regions' | 'suppliers' | 'relationships' | 'pricing' | 'unused'
+    switchView(name);  // 'regions' | 'suppliers' | 'relationships' | 'pricing' | 'products' | 'unused'
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2110,6 +2418,648 @@ document.querySelectorAll('.main-tab').forEach(tab => {
     }
   });
 })();
+
+// ============================================================
+// ============================================================
+// REPORTS TAB
+// ============================================================
+// Lets users build ad-hoc reports against any data source, filter by any field
+// with stacked conditions, save reports to localStorage, and export to CSV or
+// Excel. Designed to handle the 95% of "I need to find X" asks without becoming
+// a full pivot-table engine.
+
+const REPORTS_LS_KEY = 'rsd_saved_reports_v1';
+
+// Data source definitions -- each says how to build the row list for the report
+// and which columns are available for filtering/display. Field names match the
+// raw CRM column names (Description, Manufacturer, etc.) so they line up with
+// what the user sees elsewhere.
+const REPORT_SOURCES = {
+  pricing: {
+    label: 'Pricing rows',
+    // Fields available for filter + display. Numeric flag enables number operators.
+    fields: [
+      { key: 'Product_Description',  label: 'Product Description' },
+      { key: 'Product_Manufacturer', label: 'Product Brand' },
+      { key: 'Product_ProductLine',  label: 'Product Line' },
+      { key: 'Product_Color',        label: 'Product Color' },
+      { key: 'Product_Size',         label: 'Product Size' },
+      { key: 'Product_Uom',          label: 'Product UOM' },
+      { key: 'Region_Name',          label: 'Region' },
+      { key: 'Region_State',         label: 'Region State' },
+      { key: 'Supplier_Name',        label: 'Supplier' },
+      { key: 'Supplier_City',        label: 'Supplier City' },
+      { key: 'Supplier_State',       label: 'Supplier State' },
+      { key: 'Supplier_BranchCode',  label: 'Branch' },
+      { key: 'Price',                label: 'Price',  numeric: true },
+      { key: 'Uom',                  label: 'Price UOM' },
+      { key: 'ProductId',            label: 'ProductId' },
+      { key: 'RegionId',             label: 'RegionId' },
+      { key: 'SupplierLocationId',   label: 'SupplierLocationId' },
+    ],
+    // Default columns shown in the result table (in order)
+    defaultColumns: [
+      'Product_Description','Product_Manufacturer','Product_Color',
+      'Region_Name','Supplier_Name','Price','Uom',
+      'ProductId','RegionId','SupplierLocationId',
+    ],
+    build: () => {
+      const rows = [];
+      for (const p of (APP_DATA.pricing_raw || [])) {
+        if (!p) continue;
+        const prod = APP_DATA.products[p.ProductId];
+        const reg  = APP_DATA.regions[p.RegionId];
+        const sup  = APP_DATA.suppliers[p.SupplierLocationId];
+        rows.push({
+          Product_Description:  (prod && prod.Description)  || '',
+          Product_Manufacturer: (prod && prod.Manufacturer) || '',
+          Product_ProductLine:  (prod && prod.ProductLine)  || '',
+          Product_Color:        (prod && prod.Color)        || '',
+          Product_Size:         (prod && prod.Size)         || '',
+          Product_Uom:          (prod && prod.Uom)          || '',
+          Region_Name:          (reg && reg.Name)           || '',
+          Region_State:         reg ? extractStateFromAddrSimple(reg.AddressDisplay) : '',
+          Supplier_Name:        (sup && sup.Name)           || '',
+          Supplier_City:        (sup && sup.City)           || '',
+          Supplier_State:       (sup && sup.State)          || '',
+          Supplier_BranchCode:  (sup && sup.BranchCode)     || '',
+          Price:                p.Price != null ? Number(p.Price) : null,
+          Uom:                  p.Uom || '',
+          ProductId:            p.ProductId || '',
+          RegionId:             p.RegionId || '',
+          SupplierLocationId:   p.SupplierLocationId || '',
+        });
+      }
+      return rows;
+    },
+  },
+  products: {
+    label: 'Products',
+    fields: [
+      { key: 'Description',  label: 'Description' },
+      { key: 'Manufacturer', label: 'Brand' },
+      { key: 'ProductLine',  label: 'Product Line' },
+      { key: 'Color',        label: 'Color' },
+      { key: 'Size',         label: 'Size' },
+      { key: 'Uom',          label: 'UOM' },
+      { key: 'TradeType',    label: 'Trade Type' },
+      { key: 'Type',         label: 'Type' },
+      { key: 'Style',        label: 'Style' },
+      { key: 'Material',     label: 'Material' },
+      { key: 'IsActive',     label: 'Active' },
+      { key: 'Id',           label: 'ProductId' },
+    ],
+    defaultColumns: ['Description','Manufacturer','ProductLine','Color','Size','Uom','Id'],
+    build: () => Object.values(APP_DATA.products || {}).map(p => ({
+      Description: p.Description || '', Manufacturer: p.Manufacturer || '',
+      ProductLine: p.ProductLine || '', Color: p.Color || '',
+      Size: p.Size || '', Uom: p.Uom || '',
+      TradeType: p.TradeType || '', Type: p.Type || '',
+      Style: p.Style || '', Material: p.Material || '',
+      IsActive: p.IsActive === true ? 'Yes' : (p.IsActive === false ? 'No' : ''),
+      Id: p.Id || '',
+    })),
+  },
+  regions: {
+    label: 'Regions',
+    fields: [
+      { key: 'Name',              label: 'Name' },
+      { key: 'JobNumberPrefix',   label: 'Job Prefix' },
+      { key: 'AddressDisplay',    label: 'Address' },
+      { key: 'SalesTax',          label: 'Sales Tax', numeric: true },
+      { key: 'IsArchived',        label: 'Archived' },
+      { key: 'IsDraft',           label: 'Draft' },
+      { key: 'Id',                label: 'RegionId' },
+    ],
+    defaultColumns: ['Name','JobNumberPrefix','AddressDisplay','SalesTax','Id'],
+    build: () => Object.values(APP_DATA.regions || {}).map(r => ({
+      Name: r.Name || '', JobNumberPrefix: r.JobNumberPrefix || '',
+      AddressDisplay: r.AddressDisplay || '',
+      SalesTax: r.SalesTax != null ? Number(r.SalesTax) : null,
+      IsArchived: r.IsArchived === true ? 'Yes' : 'No',
+      IsDraft:    r.IsDraft    === true ? 'Yes' : 'No',
+      Id: r.Id || '',
+    })),
+  },
+  suppliers: {
+    label: 'Suppliers',
+    fields: [
+      { key: 'Name',         label: 'Name' },
+      { key: 'City',         label: 'City' },
+      { key: 'State',        label: 'State' },
+      { key: 'BranchCode',   label: 'Branch' },
+      { key: 'Phone',        label: 'Phone' },
+      { key: 'OrderEmail',   label: 'Order Email' },
+      { key: 'IsActive',     label: 'Active' },
+      { key: 'Id',           label: 'SupplierLocationId' },
+    ],
+    defaultColumns: ['Name','City','State','BranchCode','Phone','OrderEmail','Id'],
+    build: () => Object.values(APP_DATA.suppliers || {}).map(s => ({
+      Name: s.Name || '', City: s.City || '', State: s.State || '',
+      BranchCode: s.BranchCode || '', Phone: s.Phone || '',
+      OrderEmail: s.OrderEmail || '',
+      IsActive: s.IsActive === true ? 'Yes' : (s.IsActive === false ? 'No' : ''),
+      Id: s.Id || '',
+    })),
+  },
+  relationships: {
+    label: 'Region-Supplier pairs',
+    fields: [
+      { key: 'Region_Name',    label: 'Region' },
+      { key: 'Region_State',   label: 'Region State' },
+      { key: 'Supplier_Name',  label: 'Supplier' },
+      { key: 'Supplier_City',  label: 'Supplier City' },
+      { key: 'Supplier_State', label: 'Supplier State' },
+      { key: 'RegionId',       label: 'RegionId' },
+      { key: 'SupplierLocationId', label: 'SupplierLocationId' },
+    ],
+    defaultColumns: ['Region_Name','Region_State','Supplier_Name','Supplier_City','Supplier_State'],
+    build: () => (APP_DATA.relationships || []).map(rel => {
+      const r = APP_DATA.regions[rel.region_id] || {};
+      const s = APP_DATA.suppliers[rel.supplier_id] || {};
+      return {
+        Region_Name: r.Name || '',
+        Region_State: r.AddressDisplay ? extractStateFromAddrSimple(r.AddressDisplay) : '',
+        Supplier_Name: s.Name || '',
+        Supplier_City: s.City || '',
+        Supplier_State: s.State || '',
+        RegionId: rel.region_id, SupplierLocationId: rel.supplier_id,
+      };
+    }),
+  },
+};
+
+// Pull state out of an address like "City, State, 12345" -- duplicated from buildRows
+// so it works during report execution before/without a full re-build.
+function extractStateFromAddrSimple(addr) {
+  const m = (addr || '').match(/,\s*([A-Za-z ]+),?\s*\d{5}/);
+  return m ? m[1].trim() : '';
+}
+
+// State for the Reports tab
+let reportsInitialized = false;
+let reportFilters = [];  // [{ field, op, value, value2 }]
+let reportResults = [];
+let reportSortKey = null;
+let reportSortAsc = true;
+let reportColumns = [];  // columns to display in current report
+
+function initReportsTabIfNeeded() {
+  if (reportsInitialized) return;
+  reportsInitialized = true;
+
+  document.getElementById('reports-source').addEventListener('change', onSourceChange);
+  document.getElementById('add-filter-btn').addEventListener('click', () => { addFilterRow(); });
+  document.getElementById('run-report-btn').addEventListener('click', runReport);
+  document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
+  document.getElementById('export-csv-btn').addEventListener('click', () => exportReport('csv'));
+  document.getElementById('export-xlsx-btn').addEventListener('click', () => exportReport('xlsx'));
+  document.getElementById('save-report-btn').addEventListener('click', saveCurrentReport);
+
+  // Start with one empty filter row so the UI feels alive
+  addFilterRow();
+  renderSavedReports();
+}
+
+function onSourceChange() {
+  // Source changed -- clear filters because field options are now different
+  reportFilters = [];
+  document.getElementById('reports-filters').innerHTML = '';
+  addFilterRow();
+  // Reset results
+  reportResults = [];
+  reportColumns = [];
+  renderReportResults();
+}
+
+function currentSource() {
+  const v = document.getElementById('reports-source').value;
+  return REPORT_SOURCES[v];
+}
+
+function addFilterRow(prefill) {
+  const src = currentSource();
+  const filterIdx = reportFilters.length;
+  const filter = prefill || { field: src.fields[0].key, op: 'contains', value: '', value2: '' };
+  reportFilters.push(filter);
+
+  const host = document.getElementById('reports-filters');
+  const row = document.createElement('div');
+  row.className = 'filter-row';
+  row.dataset.idx = filterIdx;
+
+  // Field dropdown
+  const fieldSel = document.createElement('select');
+  for (const f of src.fields) {
+    const opt = document.createElement('option');
+    opt.value = f.key; opt.textContent = f.label;
+    if (f.key === filter.field) opt.selected = true;
+    fieldSel.appendChild(opt);
+  }
+  fieldSel.addEventListener('change', () => {
+    filter.field = fieldSel.value;
+    // Reset op to a default that fits the field type
+    const fd = src.fields.find(x => x.key === filter.field);
+    filter.op = fd && fd.numeric ? 'greater than' : 'contains';
+    rebuildOpDropdown(opSel, filter, src);
+    syncBetweenLayout(row, filter);
+  });
+  row.appendChild(fieldSel);
+
+  // Op dropdown
+  const opSel = document.createElement('select');
+  rebuildOpDropdown(opSel, filter, src);
+  opSel.addEventListener('change', () => {
+    filter.op = opSel.value;
+    syncBetweenLayout(row, filter);
+  });
+  row.appendChild(opSel);
+
+  // Value input
+  const valInput = document.createElement('input');
+  valInput.type = 'text';
+  valInput.placeholder = 'Value';
+  valInput.value = filter.value || '';
+  valInput.addEventListener('input', () => { filter.value = valInput.value; });
+  row.appendChild(valInput);
+
+  // Second value input (only shown for between)
+  const val2Input = document.createElement('input');
+  val2Input.type = 'text';
+  val2Input.placeholder = 'and';
+  val2Input.value = filter.value2 || '';
+  val2Input.addEventListener('input', () => { filter.value2 = val2Input.value; });
+  val2Input.style.display = filter.op === 'between' ? '' : 'none';
+  // Insert separator + second value as additional cells if between
+  row.appendChild(val2Input);
+
+  // Remove button
+  const rm = document.createElement('button');
+  rm.className = 'remove-filter';
+  rm.textContent = '\u00D7';
+  rm.title = 'Remove filter';
+  rm.addEventListener('click', () => {
+    const idx = reportFilters.indexOf(filter);
+    if (idx >= 0) reportFilters.splice(idx, 1);
+    row.remove();
+  });
+  row.appendChild(rm);
+
+  syncBetweenLayout(row, filter);
+  host.appendChild(row);
+}
+
+function rebuildOpDropdown(sel, filter, src) {
+  const fd = src.fields.find(x => x.key === filter.field);
+  const ops = fd && fd.numeric
+    ? ['equals','not equals','greater than','less than','between','is empty','is not empty']
+    : ['contains','does not contain','equals','not equals','starts with','ends with','is empty','is not empty'];
+  sel.innerHTML = '';
+  for (const op of ops) {
+    const opt = document.createElement('option');
+    opt.value = op; opt.textContent = op;
+    if (op === filter.op) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  // If current op isn't in the new list, snap to first
+  if (!ops.includes(filter.op)) {
+    filter.op = ops[0];
+    sel.value = ops[0];
+  }
+}
+
+function syncBetweenLayout(row, filter) {
+  // For "between", show the second input. For "is empty"/"is not empty", hide both.
+  const inputs = row.querySelectorAll('input');
+  const val2 = inputs[1];
+  if (filter.op === 'between') {
+    row.classList.add('between-row');
+    val2.style.display = '';
+    val2.placeholder = 'and';
+  } else {
+    row.classList.remove('between-row');
+    val2.style.display = 'none';
+  }
+  // Hide first input for emptiness checks
+  if (filter.op === 'is empty' || filter.op === 'is not empty') {
+    inputs[0].style.display = 'none';
+  } else {
+    inputs[0].style.display = '';
+  }
+}
+
+function clearFilters() {
+  reportFilters = [];
+  document.getElementById('reports-filters').innerHTML = '';
+  addFilterRow();
+  reportResults = [];
+  reportColumns = [];
+  renderReportResults();
+}
+
+function runReport() {
+  const src = currentSource();
+  const rows = src.build();
+
+  // Apply each filter (AND together)
+  const filtered = rows.filter(row => reportFilters.every(f => matchFilter(row, f, src)));
+
+  reportResults = filtered;
+  reportColumns = src.defaultColumns.slice();
+  reportSortKey = null;
+  renderReportResults();
+}
+
+function matchFilter(row, f, src) {
+  const fd = src.fields.find(x => x.key === f.field);
+  const raw = row[f.field];
+  const empty = raw == null || raw === '';
+
+  if (f.op === 'is empty')      return empty;
+  if (f.op === 'is not empty')  return !empty;
+
+  if (fd && fd.numeric) {
+    const num = raw == null || raw === '' ? null : Number(raw);
+    const v  = f.value === '' ? null : Number(f.value);
+    const v2 = f.value2 === '' ? null : Number(f.value2);
+    if (num == null || isNaN(num)) return false;
+    if (f.op === 'equals')       return v != null && num === v;
+    if (f.op === 'not equals')   return v != null && num !== v;
+    if (f.op === 'greater than') return v != null && num > v;
+    if (f.op === 'less than')    return v != null && num < v;
+    if (f.op === 'between')      return v != null && v2 != null && num >= Math.min(v,v2) && num <= Math.max(v,v2);
+    return true;
+  }
+
+  // String operators
+  const haystack = String(raw == null ? '' : raw).toLowerCase();
+  const needle   = String(f.value || '').toLowerCase();
+  if (f.op === 'contains')          return haystack.indexOf(needle) !== -1;
+  if (f.op === 'does not contain')  return haystack.indexOf(needle) === -1;
+  if (f.op === 'equals')            return haystack === needle;
+  if (f.op === 'not equals')        return haystack !== needle;
+  if (f.op === 'starts with')       return haystack.indexOf(needle) === 0;
+  if (f.op === 'ends with')         return haystack.endsWith(needle);
+  return true;
+}
+
+function renderReportResults() {
+  const header = document.getElementById('reports-results-header');
+  const body   = document.getElementById('reports-results-body');
+  header.innerHTML = '';
+  body.innerHTML = '';
+  document.getElementById('report-result-count').textContent = reportResults.length.toLocaleString();
+
+  if (reportResults.length === 0) {
+    body.innerHTML = `
+      <tr><td>
+        <div class="reports-empty-state">
+          <div class="big">No results</div>
+          <div>Adjust your filters and click Run Report. Build filters with stacked conditions (all AND together).</div>
+        </div>
+      </td></tr>`;
+    return;
+  }
+
+  const src = currentSource();
+  const cols = reportColumns;
+
+  // Header
+  for (const colKey of cols) {
+    const th = document.createElement('th');
+    const fd = src.fields.find(x => x.key === colKey);
+    th.textContent = fd ? fd.label : colKey;
+    if (reportSortKey === colKey) {
+      th.textContent += reportSortAsc ? '  \u25B2' : '  \u25BC';
+    }
+    th.addEventListener('click', () => {
+      if (reportSortKey === colKey) reportSortAsc = !reportSortAsc;
+      else { reportSortKey = colKey; reportSortAsc = true; }
+      renderReportResults();
+    });
+    header.appendChild(th);
+  }
+
+  // Body (sorted)
+  const sorted = reportSortKey
+    ? reportResults.slice().sort((a, b) => {
+        let av = a[reportSortKey], bv = b[reportSortKey];
+        if (typeof av === 'number' && typeof bv === 'number') {
+          return reportSortAsc ? av - bv : bv - av;
+        }
+        av = (av == null ? '' : String(av)).toLowerCase();
+        bv = (bv == null ? '' : String(bv)).toLowerCase();
+        if (av < bv) return reportSortAsc ? -1 : 1;
+        if (av > bv) return reportSortAsc ? 1 : -1;
+        return 0;
+      })
+    : reportResults;
+
+  // Cap rows in DOM at 1000 to keep things fast -- export uses the full set
+  const cap = 1000;
+  const showRows = sorted.slice(0, cap);
+  if (sorted.length > cap) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = cols.length;
+    td.style.cssText = 'background:#FBF1DD;color:var(--amber);padding:8px 12px;font-size:11px;font-weight:700;';
+    td.textContent = `Showing first ${cap.toLocaleString()} of ${sorted.length.toLocaleString()} rows. Export to see all.`;
+    tr.appendChild(td);
+    body.appendChild(tr);
+  }
+  for (const r of showRows) {
+    const tr = document.createElement('tr');
+    for (const colKey of cols) {
+      const td = document.createElement('td');
+      const fd = src.fields.find(x => x.key === colKey);
+      const val = r[colKey];
+      if (fd && fd.numeric && typeof val === 'number') {
+        td.textContent = (colKey === 'Price') ? '$' + val.toFixed(2) : val.toLocaleString();
+        td.style.textAlign = 'right';
+        td.style.fontVariantNumeric = 'tabular-nums';
+      } else {
+        td.textContent = val == null ? '' : String(val);
+      }
+      tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  }
+}
+
+// ============================================================
+// EXPORTS
+// ============================================================
+function exportReport(format) {
+  if (!reportResults || reportResults.length === 0) {
+    alert('Run a report first before exporting.');
+    return;
+  }
+  const src = currentSource();
+  const cols = reportColumns;
+  const headers = cols.map(k => {
+    const fd = src.fields.find(x => x.key === k);
+    return fd ? fd.label : k;
+  });
+
+  // Build the row data with proper number formatting
+  const data = reportResults.map(r => cols.map(k => {
+    const v = r[k];
+    if (v == null) return '';
+    if (typeof v === 'number') return v;
+    return v;
+  }));
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const sourceName = src.label.replace(/\s+/g, '_');
+  const filename = `Report_${sourceName}_${stamp}`;
+
+  if (format === 'csv') {
+    exportAsCSV(headers, data, filename);
+  } else if (format === 'xlsx') {
+    exportAsXLSX(headers, data, filename);
+  }
+}
+
+function exportAsCSV(headers, data, filename) {
+  // RFC 4180: wrap any field containing comma, quote, or newline in quotes;
+  // escape embedded quotes by doubling them.
+  function cell(v) {
+    const s = v == null ? '' : String(v);
+    if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  const lines = [headers.map(cell).join(',')];
+  for (const row of data) lines.push(row.map(cell).join(','));
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  triggerDownload(blob, filename + '.csv');
+}
+
+function exportAsXLSX(headers, data, filename) {
+  const aoa = [headers, ...data];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  // Make the header bold + navy fill, matching Elite Standard
+  for (let c = 0; c < headers.length; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if (!ws[addr]) ws[addr] = { t: 's', v: headers[c] };
+    ws[addr].s = {
+      fill: { patternType: 'solid', fgColor: { rgb: '1B2A4A' } },
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      alignment: { vertical: 'center' },
+    };
+  }
+  // Reasonable column widths
+  ws['!cols'] = headers.map((h, i) => {
+    let max = h.length;
+    for (const row of data) {
+      const v = row[i];
+      if (v == null) continue;
+      const len = String(v).length;
+      if (len > max) max = len;
+    }
+    return { wch: Math.min(Math.max(max + 2, 10), 60) };
+  });
+  ws['!views'] = [{ ySplit: 1, state: 'frozen', topLeftCell: 'A2' }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Report');
+  XLSX.writeFile(wb, filename + '.xlsx');
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+}
+
+// ============================================================
+// SAVED REPORTS (localStorage)
+// ============================================================
+function loadSavedReports() {
+  try {
+    const raw = localStorage.getItem(REPORTS_LS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) { return []; }
+}
+
+function persistSavedReports(reports) {
+  try {
+    localStorage.setItem(REPORTS_LS_KEY, JSON.stringify(reports));
+  } catch (e) {
+    alert('Could not save report (storage full or blocked).');
+  }
+}
+
+function saveCurrentReport() {
+  const nameInput = document.getElementById('report-name');
+  const name = (nameInput.value || '').trim();
+  if (!name) { alert('Give the report a name first.'); return; }
+  const src = document.getElementById('reports-source').value;
+  const reports = loadSavedReports();
+  // Replace existing report with the same name, or append
+  const existing = reports.findIndex(r => r.name === name);
+  const entry = {
+    name,
+    source: src,
+    filters: reportFilters.map(f => ({ field: f.field, op: f.op, value: f.value || '', value2: f.value2 || '' })),
+    savedAt: new Date().toISOString(),
+  };
+  if (existing >= 0) reports[existing] = entry;
+  else reports.push(entry);
+  persistSavedReports(reports);
+  nameInput.value = '';
+  renderSavedReports();
+}
+
+function renderSavedReports() {
+  const host = document.getElementById('saved-reports-list');
+  const reports = loadSavedReports();
+  if (reports.length === 0) {
+    host.innerHTML = '<div class="empty-saved">No saved reports yet.</div>';
+    return;
+  }
+  host.innerHTML = '';
+  // Most recent first
+  reports.sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+  for (const r of reports) {
+    const row = document.createElement('div');
+    row.className = 'saved-report';
+    const date = r.savedAt ? new Date(r.savedAt).toLocaleDateString() : '';
+    row.innerHTML = `
+      <div>
+        <div class="name">${escapeHtml(r.name)}</div>
+        <div class="meta">${escapeHtml(REPORT_SOURCES[r.source] ? REPORT_SOURCES[r.source].label : r.source)} \u00B7 ${r.filters.length} filter${r.filters.length === 1 ? '' : 's'} \u00B7 ${date}</div>
+      </div>
+      <button class="issue-action">Load</button>
+      <button class="delete-btn" title="Delete">\u00D7</button>
+    `;
+    row.querySelector('.name').addEventListener('click', () => loadReport(r));
+    row.querySelector('.issue-action').addEventListener('click', () => loadReport(r));
+    row.querySelector('.delete-btn').addEventListener('click', () => {
+      if (!confirm('Delete report "' + r.name + '"?')) return;
+      const all = loadSavedReports().filter(x => x.name !== r.name);
+      persistSavedReports(all);
+      renderSavedReports();
+    });
+    host.appendChild(row);
+  }
+}
+
+function loadReport(saved) {
+  // Restore source
+  document.getElementById('reports-source').value = saved.source;
+  // Clear current filters and rebuild from saved
+  reportFilters = [];
+  document.getElementById('reports-filters').innerHTML = '';
+  for (const f of saved.filters) addFilterRow(f);
+  if (saved.filters.length === 0) addFilterRow();
+  // Optionally auto-run
+  runReport();
+}
 
 // ============================================================
 // FETCH FROM BACKEND
