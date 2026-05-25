@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.3.0 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.3.1 | ECS Brands</title>
 <style>
   :root {
     --navy: #1B2A4A;
@@ -975,7 +975,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.0</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.1</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -2923,8 +2923,22 @@ function exportReport(format) {
 function exportAsCSV(headers, data, filename) {
   // RFC 4180: wrap any field containing comma, quote, or newline in quotes;
   // escape embedded quotes by doubling them.
+  //
+  // Preserve leading zeros: Excel auto-converts CSV strings like "004" to the
+  // number 4 on import. The standard workaround is to emit the value as
+  // ="004" -- Excel and Sheets both interpret this as the literal string "004".
+  // We apply this only to values that look like digit-only strings starting
+  // with 0, to avoid uglifying normal data.
+  function looksLikeZeroPaddedCode(v) {
+    return typeof v === 'string' && /^0\d+$/.test(v);
+  }
   function cell(v) {
-    const s = v == null ? '' : String(v);
+    if (v == null) return '';
+    if (looksLikeZeroPaddedCode(v)) {
+      // ="004" form -- still wrap the whole field in quotes to be CSV-safe
+      return '="' + v + '"';
+    }
+    const s = String(v);
     if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
@@ -2935,19 +2949,47 @@ function exportAsCSV(headers, data, filename) {
 }
 
 function exportAsXLSX(headers, data, filename) {
-  const aoa = [headers, ...data];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  // Make the header bold + navy fill, matching Elite Standard
+  // SheetJS auto-detects cell types and will silently coerce strings like "004"
+  // to the number 4, destroying leading zeros. To prevent this, build the sheet
+  // cell-by-cell and explicitly set type 's' (string) on every string value,
+  // and type 'n' (number) only on values that are genuinely numbers in JS.
+  const ws = {};
+  const range = { s: { c: 0, r: 0 }, e: { c: headers.length - 1, r: data.length } };
+
+  // Header row
   for (let c = 0; c < headers.length; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c });
-    if (!ws[addr]) ws[addr] = { t: 's', v: headers[c] };
-    ws[addr].s = {
-      fill: { patternType: 'solid', fgColor: { rgb: '1B2A4A' } },
-      font: { bold: true, color: { rgb: 'FFFFFF' } },
-      alignment: { vertical: 'center' },
+    ws[addr] = {
+      t: 's',
+      v: headers[c],
+      s: {
+        fill: { patternType: 'solid', fgColor: { rgb: '1B2A4A' } },
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        alignment: { vertical: 'center' },
+      },
     };
   }
-  // Reasonable column widths
+
+  // Data rows -- explicit type per cell
+  for (let r = 0; r < data.length; r++) {
+    const row = data[r];
+    for (let c = 0; c < headers.length; c++) {
+      const v = row[c];
+      const addr = XLSX.utils.encode_cell({ r: r + 1, c });
+      if (v == null || v === '') {
+        ws[addr] = { t: 's', v: '' };
+      } else if (typeof v === 'number' && !isNaN(v)) {
+        ws[addr] = { t: 'n', v: v };
+      } else {
+        // Force text. Without this, "004" becomes 4 and dates may be reparsed.
+        ws[addr] = { t: 's', v: String(v) };
+      }
+    }
+  }
+
+  ws['!ref'] = XLSX.utils.encode_range(range);
+
+  // Reasonable column widths based on content
   ws['!cols'] = headers.map((h, i) => {
     let max = h.length;
     for (const row of data) {
