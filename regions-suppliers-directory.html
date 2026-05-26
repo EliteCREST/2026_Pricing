@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regions & Suppliers Directory v3.3.4 | ECS Brands</title>
+<title>Regions & Suppliers Directory v3.4.0 | ECS Brands</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
@@ -976,7 +976,7 @@
 <div class="header">
   <div class="accent"></div>
   <div>
-    <h1>Regions &amp; Suppliers Directory <span class="version">v3.3.4</span></h1>
+    <h1>Regions &amp; Suppliers Directory <span class="version">v3.4.0</span></h1>
     <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
   </div>
   <div class="header-actions">
@@ -1779,6 +1779,236 @@ function renderIssuesPanel() {
       detail: 'Suppliers marked IsActive=false but pricing rows still reference them. Stale data that may surface to users.',
       actionLabel: 'View Suppliers',
       onAction: () => switchMainTab('suppliers'),
+    });
+  }
+
+  // ============== ADDITIONAL DATA HYGIENE CHECKS ==============
+
+  const pricingRaw = APP_DATA.pricing_raw || [];
+
+  // Ghost suppliers: pricing rows reference SupplierLocationIds that don't exist
+  const ghostSupplierRows = [];
+  const ghostSupplierIds = new Set();
+  for (const p of pricingRaw) {
+    if (p.SupplierLocationId && !APP_DATA.suppliers[p.SupplierLocationId]) {
+      ghostSupplierRows.push(p);
+      ghostSupplierIds.add(p.SupplierLocationId);
+    }
+  }
+  if (ghostSupplierRows.length > 0) {
+    issues.push({
+      cls: 'red',
+      icon: '!',
+      title: `${ghostSupplierRows.length.toLocaleString()} pricing rows reference suppliers that don't exist`,
+      detail: `${ghostSupplierIds.size} distinct SupplierLocationId values in pricing are missing from the Suppliers tab. Orphan supplier references that need cleanup or restoration.`,
+      actionLabel: 'View',
+      onAction: () => switchMainTab('pricing'),
+    });
+  }
+
+  // Pricing rows missing RegionId or SupplierLocationId entirely
+  let missingFks = 0;
+  for (const p of pricingRaw) {
+    if (!p.RegionId || !p.SupplierLocationId) missingFks++;
+  }
+  if (missingFks > 0) {
+    issues.push({
+      cls: 'red',
+      icon: '!',
+      title: `${missingFks.toLocaleString()} pricing rows missing RegionId or SupplierLocationId`,
+      detail: 'Pricing rows with blank or null foreign keys. These rows cannot be tied to a region or supplier and will not surface in lookups.',
+      actionLabel: 'View',
+      onAction: () => switchMainTab('pricing'),
+    });
+  }
+
+  // Zero, null, or negative prices
+  let badPrices = 0;
+  for (const p of pricingRaw) {
+    const price = parseFloat(p.Price);
+    if (p.Price === null || p.Price === undefined || p.Price === '' || isNaN(price) || price <= 0) badPrices++;
+  }
+  if (badPrices > 0) {
+    issues.push({
+      cls: 'red',
+      icon: '!',
+      title: `${badPrices.toLocaleString()} pricing rows have zero, null, or negative prices`,
+      detail: 'Active rows with $0.00, blank, or negative Price values that shouldn\u2019t be live. Likely data entry errors or placeholder rows.',
+      actionLabel: 'View',
+      onAction: () => switchMainTab('pricing'),
+    });
+  }
+
+  // Duplicate pricing rows: same ProductId + RegionId + SupplierLocationId
+  const pricingDupeMap = new Map();
+  for (const p of pricingRaw) {
+    if (!p.ProductId || !p.RegionId || !p.SupplierLocationId) continue;
+    const key = `${p.ProductId}|${p.RegionId}|${p.SupplierLocationId}`;
+    pricingDupeMap.set(key, (pricingDupeMap.get(key) || 0) + 1);
+  }
+  let pricingDupes = 0;
+  for (const count of pricingDupeMap.values()) {
+    if (count > 1) pricingDupes += count;
+  }
+  if (pricingDupes > 0) {
+    issues.push({
+      cls: '',
+      icon: '?',
+      title: `${pricingDupes.toLocaleString()} duplicate pricing rows detected`,
+      detail: 'Same ProductId + RegionId + SupplierLocationId appearing more than once. Which row wins when looking up a price?',
+      actionLabel: 'View',
+      onAction: () => switchMainTab('pricing'),
+    });
+  }
+
+  // Regions with no suppliers configured
+  const regionsWithSuppliers = new Set(APP_DATA.relationships.map(r => r.region_id));
+  let regionsWithNoSuppliers = 0;
+  for (const rid of Object.keys(APP_DATA.regions)) {
+    if (!regionsWithSuppliers.has(rid)) regionsWithNoSuppliers++;
+  }
+  if (regionsWithNoSuppliers > 0) {
+    issues.push({
+      cls: '',
+      icon: '?',
+      title: `${regionsWithNoSuppliers} regions have no suppliers configured`,
+      detail: 'Region exists but cannot transact \u2014 no supplier assignments at all. Either archive the region or assign suppliers.',
+      actionLabel: 'View Regions',
+      onAction: () => switchMainTab('regions'),
+    });
+  }
+
+  // Regions with suppliers but no pricing rows
+  const regionsWithPricing = new Set();
+  for (const p of pricingRaw) {
+    if (p.RegionId) regionsWithPricing.add(p.RegionId);
+  }
+  let regionsNoPricing = 0;
+  for (const rid of regionsWithSuppliers) {
+    if (!regionsWithPricing.has(rid) && APP_DATA.regions[rid]) regionsNoPricing++;
+  }
+  if (regionsNoPricing > 0) {
+    issues.push({
+      cls: '',
+      icon: '?',
+      title: `${regionsNoPricing} regions have suppliers but zero pricing rows`,
+      detail: 'Suppliers are assigned to these regions but no pricing flows through. Orders to these regions will return no prices.',
+      actionLabel: 'View Regions',
+      onAction: () => switchMainTab('regions'),
+    });
+  }
+
+  // Duplicate supplier records (same name, case-insensitive, trimmed)
+  const supplierNameMap = new Map();
+  for (const s of Object.values(APP_DATA.suppliers)) {
+    if (!s.Name) continue;
+    const normalized = String(s.Name).toLowerCase().replace(/[\s\-_,.]+/g, ' ').trim();
+    if (!supplierNameMap.has(normalized)) supplierNameMap.set(normalized, []);
+    supplierNameMap.get(normalized).push(s.Id);
+  }
+  let dupSupplierGroups = 0;
+  for (const ids of supplierNameMap.values()) {
+    if (ids.length > 1) dupSupplierGroups++;
+  }
+  if (dupSupplierGroups > 0) {
+    issues.push({
+      cls: '',
+      icon: '?',
+      title: `${dupSupplierGroups} potential duplicate supplier records`,
+      detail: 'Same branch name appearing under multiple SupplierLocationIds after normalizing punctuation and spacing (e.g. "ABC West Allis" vs "ABC - West Allis"). May be accidental dupes.',
+      actionLabel: 'View Suppliers',
+      onAction: () => switchMainTab('suppliers'),
+    });
+  }
+
+  // Products priced in some regions but not others (coverage gaps)
+  const productRegionCoverage = new Map();
+  const totalRegions = Object.keys(APP_DATA.regions).length;
+  for (const p of pricingRaw) {
+    if (!p.ProductId || !p.RegionId) continue;
+    if (!productRegionCoverage.has(p.ProductId)) productRegionCoverage.set(p.ProductId, new Set());
+    productRegionCoverage.get(p.ProductId).add(p.RegionId);
+  }
+  let partialCoverageProducts = 0;
+  for (const regionSet of productRegionCoverage.values()) {
+    if (regionSet.size > 0 && regionSet.size < totalRegions) partialCoverageProducts++;
+  }
+  if (partialCoverageProducts > 0) {
+    issues.push({
+      cls: 'blue',
+      icon: 'i',
+      title: `${partialCoverageProducts.toLocaleString()} products priced in some regions but not others`,
+      detail: `Products with regional pricing gaps \u2014 priced in fewer than all ${totalRegions} regions. Coverage gaps for procurement.`,
+      actionLabel: 'View Products',
+      onAction: () => switchMainTab('products'),
+    });
+  }
+
+  // Product + region pairs with only one supplier quote (single-source risk)
+  const productRegionSuppliers = new Map();
+  for (const p of pricingRaw) {
+    if (!p.ProductId || !p.RegionId || !p.SupplierLocationId) continue;
+    const key = `${p.ProductId}|${p.RegionId}`;
+    if (!productRegionSuppliers.has(key)) productRegionSuppliers.set(key, new Set());
+    productRegionSuppliers.get(key).add(p.SupplierLocationId);
+  }
+  let singleSourcePairs = 0;
+  for (const supSet of productRegionSuppliers.values()) {
+    if (supSet.size === 1) singleSourcePairs++;
+  }
+  if (singleSourcePairs > 0) {
+    issues.push({
+      cls: 'blue',
+      icon: 'i',
+      title: `${singleSourcePairs.toLocaleString()} product+region pairs have only one supplier quote`,
+      detail: 'No competitive pricing \u2014 single point of failure if that supplier is unavailable.',
+      actionLabel: 'View Pricing',
+      onAction: () => switchMainTab('pricing'),
+    });
+  }
+
+  // Supplier+region pairings configured but with zero pricing
+  // Pre-build a Set of "region|supplier" keys that appear in pricing for O(1) lookup
+  const pairsWithPricing = new Set();
+  for (const p of pricingRaw) {
+    if (p.RegionId && p.SupplierLocationId) {
+      pairsWithPricing.add(`${p.RegionId}|${p.SupplierLocationId}`);
+    }
+  }
+  let emptyPairings = 0;
+  for (const rel of APP_DATA.relationships) {
+    if (!pairsWithPricing.has(`${rel.region_id}|${rel.supplier_id}`)) emptyPairings++;
+  }
+  if (emptyPairings > 0) {
+    issues.push({
+      cls: 'blue',
+      icon: 'i',
+      title: `${emptyPairings.toLocaleString()} supplier+region pairings have zero pricing`,
+      detail: 'Pairing exists in the Relationships join table, but no pricing rows actually flow between that supplier and region.',
+      actionLabel: 'View Relationships',
+      onAction: () => switchMainTab('relationships'),
+    });
+  }
+
+  // Stale pricing: rows not updated in 90+ days
+  const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
+  let stalePricing = 0;
+  let pricingWithTimestamps = 0;
+  for (const p of pricingRaw) {
+    if (!p.UpdatedAt) continue;
+    pricingWithTimestamps++;
+    const ts = new Date(p.UpdatedAt).getTime();
+    if (!isNaN(ts) && ts < ninetyDaysAgo) stalePricing++;
+  }
+  // Only show if we have timestamps to actually evaluate (avoid false alarm on missing field)
+  if (stalePricing > 0 && pricingWithTimestamps > 0) {
+    issues.push({
+      cls: '',
+      icon: '?',
+      title: `${stalePricing.toLocaleString()} pricing rows not updated in 90+ days`,
+      detail: 'Rows older than 90 days based on UpdatedAt timestamp. Supplier price sheets may be out of date.',
+      actionLabel: 'View',
+      onAction: () => switchMainTab('pricing'),
     });
   }
 
