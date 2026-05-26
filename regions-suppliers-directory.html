@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blaze Data v1.5 | ECS Brands</title>
+<title>Blaze Data v1.5.1 | ECS Brands</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
@@ -67,7 +67,7 @@
     gap: 10px;
     align-items: center;
   }
-  .settings-wrap { position: relative; }
+  .settings-wrap { display: none !important; }
   .settings-btn {
     background: var(--blue);
     color: #fff;
@@ -978,12 +978,12 @@
 <body>
 
 <div class="header">
-  <h1>BLAZE <span class="accent-text">DATA</span><span class="version" id="versionPill">v1.5</span></h1>
+  <h1>BLAZE <span class="accent-text">DATA</span><span class="version" id="versionPill">v1.5.1</span></h1>
   <div class="header-actions">
     <a class="nav-btn" href="https://elitecrest.github.io/2026_Pricing/PricingApp.html" target="_blank" rel="noopener">
       <span>📈</span><span>Elite Data</span>
     </a>
-    <div class="settings-wrap" style="display:none;">
+    <div class="settings-wrap">
       <button class="settings-btn" id="settings-toggle" aria-haspopup="true" aria-expanded="false">
         <span>⚙</span><span>Settings</span>
       </button>
