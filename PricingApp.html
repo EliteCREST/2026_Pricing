@@ -1079,7 +1079,11 @@ function _blazePrefix(blaze) {
 }
 
 function _groupKey(row) {
-  return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|' + _blazePrefix(row['Blaze Code']);
+  // If there's no Blaze Code, fall back to the row's unique _row index so each unkeyed
+  // row stays its own group instead of every blank-Blaze row collapsing into one.
+  const prefix = _blazePrefix(row['Blaze Code']);
+  if (!prefix) return 'NOKEY|' + row._row;
+  return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|' + prefix;
 }
 
 function renderTable() {
