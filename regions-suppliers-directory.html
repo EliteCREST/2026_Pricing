@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blaze Data v3.4.1 | ECS Brands</title>
+<title>Blaze Data v1.5 | ECS Brands</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
@@ -32,86 +32,73 @@
   .header {
     background: var(--navy);
     color: white;
-    padding: 16px 28px;
-    border-bottom: 4px solid var(--gold);
-    display: grid;
-    grid-template-columns: 4px 1fr auto;
-    gap: 18px;
+    padding: 10px 16px;
+    display: flex;
     align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 56px;
   }
-  .header .accent { background: var(--gold); height: 32px; }
   .header h1 {
     margin: 0;
-    font-size: 17px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 700;
-  }
-  .header h1 .version {
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--gold);
-    letter-spacing: 0.5px;
-    margin-left: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
     text-transform: none;
   }
-  .header .subtitle {
-    font-size: 11px;
-    color: #C5CFE0;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
+  .header h1 .accent-text {
+    color: #4A8BD9;
   }
-  .header .badge {
-    background: rgba(201,169,97,0.15);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    padding: 4px 10px;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-radius: 2px;
+  .header h1 .version {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
   }
 
   /* Settings menu in header */
   .header-actions {
+    margin-left: auto;
     display: flex;
     gap: 10px;
     align-items: center;
   }
   .settings-wrap { position: relative; }
   .settings-btn {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 6px 12px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
     font-family: Arial, sans-serif;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    font-weight: bold;
     cursor: pointer;
-    border-radius: 2px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
   }
-  .settings-btn:hover { background: rgba(255,255,255,0.1); }
+  .settings-btn:hover { background: #4A8BD9; }
   .nav-btn {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 6px 12px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
     font-family: Arial, sans-serif;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    font-weight: bold;
     cursor: pointer;
-    border-radius: 2px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     text-decoration: none;
   }
-  .nav-btn:hover { background: rgba(255,255,255,0.1); }
+  .nav-btn:hover { background: #4A8BD9; }
   .settings-menu {
     position: absolute;
     top: calc(100% + 6px);
@@ -991,11 +978,7 @@
 <body>
 
 <div class="header">
-  <div class="accent"></div>
-  <div>
-    <h1>Blaze Data <span class="version">v3.4.1</span></h1>
-    <div class="subtitle">Searchable cross-reference of every region-supplier relationship</div>
-  </div>
+  <h1>BLAZE <span class="accent-text">DATA</span><span class="version" id="versionPill">v1.5</span></h1>
   <div class="header-actions">
     <a class="nav-btn" href="https://elitecrest.github.io/2026_Pricing/PricingApp.html" target="_blank" rel="noopener">
       <span>📈</span><span>Elite Data</span>
@@ -1015,7 +998,6 @@
         </a>
       </div>
     </div>
-    <div class="badge">Elite Tools</div>
   </div>
 </div>
 

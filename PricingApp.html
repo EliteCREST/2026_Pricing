@@ -633,16 +633,16 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.2.5</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
     <span id="lastSync"></span>
-    <button class="admin-btn" id="adminBtn">🔒 Admin</button>
-    <button id="refreshBtn">↻ Refresh</button>
     <a class="nav-link" href="https://elitecrest.github.io/2026_Pricing/regions-suppliers-directory.html" target="_blank" rel="noopener">
       <span>🔥</span><span>Blaze Data</span>
     </a>
+    <button class="admin-btn" id="adminBtn">🔒 Admin</button>
+    <button id="refreshBtn">↻ Refresh</button>
     <div class="settings-wrap">
       <button id="settingsBtn">⚙ Settings</button>
       <div class="settings-menu" id="settingsMenu">
@@ -1836,7 +1836,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.2.5';
+  const APP_VERSION = 'v1.5';
   let isUnlocked = false;
 
   function showLogin() {
