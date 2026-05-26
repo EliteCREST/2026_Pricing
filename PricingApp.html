@@ -1079,11 +1079,20 @@ function _blazePrefix(blaze) {
 }
 
 function _groupKey(row) {
-  // If there's no Blaze Code, fall back to the row's unique _row index so each unkeyed
-  // row stays its own group instead of every blank-Blaze row collapsing into one.
   const prefix = _blazePrefix(row['Blaze Code']);
-  if (!prefix) return 'NOKEY|' + row._row;
-  return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|' + prefix;
+  if (prefix) {
+    return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|' + prefix;
+  }
+  // No Blaze Code — try grouping by Brand + Elite Product Name so multi-color
+  // products without a Blaze Code still roll up correctly.
+  const brand = (row['Brand'] || '').trim();
+  const epn = (row['Elite Product Name'] || '').trim();
+  if (brand && epn) {
+    return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|NOBLZ|' + brand + '|' + epn;
+  }
+  // Fully unkeyed row — give it its own unique group so it doesn't collapse
+  // with every other unkeyed row.
+  return 'NOKEY|' + row._row;
 }
 
 function renderTable() {
