@@ -1081,7 +1081,12 @@ function _blazePrefix(blaze) {
 }
 
 function _groupKey(row) {
-  return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|' + _blazePrefix(row['Blaze Code']);
+  const sup = row['SUPPLIER'] || '';
+  const st = row['ST'] || '';
+  const brand = (row['Brand'] || '').toString().trim();
+  const epn = (row['Elite Product Name'] || '').toString().trim();
+  const prefix = _blazePrefix(row['Blaze Code']);
+  return sup + '|' + st + '|' + brand + '|' + epn + '|' + prefix;
 }
 
 function renderTable() {
