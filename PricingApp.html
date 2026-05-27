@@ -810,20 +810,20 @@ function safeCache(obj) {
 
 // All columns in the expected order
 const ALL_COLUMNS = [
-  'SUPPLIER','ST','Blaze Code','Branch ID','Item #','Item Color','Item Final',
+  'SUPPLIER','ST','Elite Code for Blaze','Branch ID','Item #','Item Color','Item Final',
   'Type','Type Code','Description','Description Code','Brand','BrandLine',
   'Elite Product Name','Measurement','Color','Color Code','Price UOM',
   'Current Price','Price Sheet'
 ];
 
 const DEFAULT_VISIBLE = new Set([
-  'SUPPLIER','ST','Blaze Code','Item #','Item Color','Type','Brand','Elite Product Name',
+  'SUPPLIER','ST','Elite Code for Blaze','Item #','Item Color','Type','Brand','Elite Product Name',
   'Color','Price UOM','Current Price'
 ]);
 
-const DERIVED_FIELDS = new Set(['Type Code','Description Code','Color Code','Item #','Item Color','Blaze Code']);
+const DERIVED_FIELDS = new Set(['Type Code','Description Code','Color Code','Item #','Item Color','Elite Code for Blaze']);
 const NUMERIC_FIELDS = new Set(['Current Price']);
-const CODE_FIELDS = new Set(['Type Code','Description Code','Color Code','Blaze Code','Item #','Item Color','Item Final']);
+const CODE_FIELDS = new Set(['Type Code','Description Code','Color Code','Elite Code for Blaze','Item #','Item Color','Item Final']);
 
 // ============================================================
 // STATE
@@ -1079,7 +1079,7 @@ function _blazePrefix(blaze) {
 }
 
 function _groupKey(row) {
-  const prefix = _blazePrefix(row['Blaze Code']);
+  const prefix = _blazePrefix(row['Elite Code for Blaze']);
   if (prefix) {
     return (row['SUPPLIER'] || '') + '|' + (row['ST'] || '') + '|' + prefix;
   }
@@ -1156,9 +1156,9 @@ function renderTable() {
       const isPerColorField = (col === 'Item Color' || col === 'Item Final' || col === 'Color Code');
       if (showDropdown && isPerColorField) {
         v = '';
-      } else if (showDropdown && col === 'Blaze Code') {
+      } else if (showDropdown && col === 'Elite Code for Blaze') {
         // Show the shared prefix so the user sees the product, not one specific color's code
-        v = _blazePrefix(rep['Blaze Code']);
+        v = _blazePrefix(rep['Elite Code for Blaze']);
       } else if (showDropdown && col === 'Color') {
         // Render the dropdown using the deduped color list, sorted A-Z
         const sortedColors = uniqueColors.slice().sort((a, b) =>
@@ -1214,14 +1214,14 @@ function renderTable() {
         updateCell('Item Color', '');
         updateCell('Item Final', '');
         updateCell('Color Code', '');
-        updateCell('Blaze Code', _blazePrefix(group[0]['Blaze Code']));
+        updateCell('Elite Code for Blaze', _blazePrefix(group[0]['Elite Code for Blaze']));
         tr.dataset.row = group[0]._row;
       } else {
         const picked = group[parseInt(choice)];
         updateCell('Item Color', picked['Item Color'] == null ? '' : String(picked['Item Color']));
         updateCell('Item Final', picked['Item Final'] == null ? '' : String(picked['Item Final']));
         updateCell('Color Code', picked['Color Code'] == null ? '' : String(picked['Color Code']));
-        updateCell('Blaze Code', picked['Blaze Code'] == null ? '' : String(picked['Blaze Code']));
+        updateCell('Elite Code for Blaze', picked['Elite Code for Blaze'] == null ? '' : String(picked['Elite Code for Blaze']));
         tr.dataset.row = picked._row;
       }
     });
@@ -1280,7 +1280,7 @@ function openEditPanel(row, isAdd = false) {
     { title: 'Item', fields: ['Item Final','Item #','Item Color'] },
     { title: 'Product', fields: ['Type','Brand','BrandLine','Description','Elite Product Name','Measurement'] },
     { title: 'Color & Pricing', fields: ['Color','Price UOM','Current Price'] },
-    { title: 'Derived Codes (auto)', fields: ['Type Code','Description Code','Color Code','Blaze Code'] }
+    { title: 'Derived Codes (auto)', fields: ['Type Code','Description Code','Color Code','Elite Code for Blaze'] }
   ];
 
   groups.forEach(g => {
@@ -1415,7 +1415,7 @@ function recomputeDerived() {
   const br = (document.querySelector('[data-field="Brand"]')?.value || '').trim();
   const dc = (document.querySelector('[data-field="Description Code"]')?.value || '').trim();
   const cc = (document.querySelector('[data-field="Color Code"]')?.value || '').trim();
-  setFieldValue('Blaze Code', buildBlazeCode(tc, br, dc, cc));
+  setFieldValue('Elite Code for Blaze', buildBlazeCode(tc, br, dc, cc));
 }
 
 function buildBlazeCode(tc, br, dc, cc) {
@@ -1625,7 +1625,7 @@ function _exportProducts(sourceRows, filename, toastPrefix) {
     const out = cols.map(col => {
       if (isMulti) {
         if (col === 'Color') return escapeCsv(colorList);
-        if (col === 'Blaze Code') return escapeCsv(_blazePrefix(rep['Blaze Code']));
+        if (col === 'Elite Code for Blaze') return escapeCsv(_blazePrefix(rep['Elite Code for Blaze']));
         if (col === 'Item Color' || col === 'Item Final' || col === 'Color Code') return '';
       }
       const v = rep[col];
