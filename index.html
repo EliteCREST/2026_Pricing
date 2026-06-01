@@ -441,10 +441,12 @@
   }
 
   // ─── Backend ────────────────────────────────────────────────
+  // CORS workaround: Apps Script's doGet triggers CORS preflight on fetch from
+  // a different origin (like GitHub Pages). doPost with Content-Type: text/plain
+  // is a "simple request" that skips preflight. So we route everything through
+  // POST. The backend's doPost handles a `resource` field for what was GET.
   async function apiGet(params) {
-    const qs = new URLSearchParams(params).toString();
-    const res = await fetch(BACKEND_URL + '?' + qs);
-    return res.json();
+    return apiPost({ action: 'get', ...params });
   }
   async function apiPost(body) {
     const res = await fetch(BACKEND_URL, {
