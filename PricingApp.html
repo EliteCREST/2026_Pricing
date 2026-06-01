@@ -895,12 +895,32 @@ async function loadBootstrap(useCache = true) {
   }
 }
 
+let _versionToastShown = false;
+function _parseVer(v) {
+  return String(v || '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+}
+function checkVersion(latest) {
+  if (!latest || _versionToastShown) return;
+  const cur = _parseVer(APP_VERSION);
+  const lat = _parseVer(latest);
+  for (let i = 0; i < Math.max(cur.length, lat.length); i++) {
+    const c = cur[i] || 0, l = lat[i] || 0;
+    if (l > c) {
+      _versionToastShown = true;
+      toast(`Update available — v${String(latest).replace(/^v/i,'')} is out. Refresh to update.`, 'success');
+      return;
+    }
+    if (l < c) return;
+  }
+}
+
 function applyBootstrap(data) {
   state.rows = data.rawData || [];
   state.typeCodes = data.typeCodes || [];
   state.skuChart = data.skuChart || [];
   state.colorChart = data.colorChart || [];
   state.serverTime = data.serverTime;
+  checkVersion(data.latestVersion);
   document.getElementById('totalCount').textContent = state.rows.length;
   // Initial sort: state → type-rank → brand → product
   if (!state.sortBy) {
