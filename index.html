@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABC Pricing Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #fafaf7;
+    --surface:      #ffffff;
+    --ink:          #14110e;
+    --ink-soft:     #4a453f;
+    --ink-muted:    #8a857d;
+    --line:         #e8e4dd;
+    --line-strong:  #d4cfc6;
+    --accent:       #1f3a5f;
+    --accent-soft:  #e8eef5;
+    --good:         #16734a;
+    --good-soft:    #ddf0e6;
+    --bad:          #a02a2a;
+    --bad-soft:     #f5dede;
+    --warn:         #946700;
+    --warn-soft:    #fbeec5;
+    --admin:        #b4500a;
+    --admin-soft:   #fde2c4;
+    --shadow-sm:    0 1px 2px rgba(20,17,14,.04);
+    --shadow-md:    0 4px 16px rgba(20,17,14,.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font-family: 'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+
+  /* ─── Layout shell ─────────────────────────────────────── */
+  .shell { max-width: 1400px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ─── Header ───────────────────────────────────────────── */
+  .top {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 28px 0 16px; border-bottom: 1px solid var(--line);
+    gap: 24px; flex-wrap: wrap;
+  }
+  .brand h1 {
+    margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
+    color: var(--ink);
+  }
+  .brand .sub {
+    font-size: 13px; color: var(--ink-muted); margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .brand .sub strong { color: var(--ink-soft); font-weight: 600; }
+
+  .top-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .refresh-btn {
+    background: var(--surface); border: 1px solid var(--line-strong);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+  .refresh-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+
+  /* Admin login pill */
+  .auth {
+    position: relative;
+  }
+  .auth-btn {
+    background: var(--ink); color: #fff; border: none;
+    padding: 8px 16px; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .auth-btn:hover { background: var(--accent); }
+  .auth-btn.logged-in { background: var(--admin); }
+  .auth-btn.logged-in::before {
+    content: "●"; margin-right: 6px; color: #fff; font-size: 11px;
+  }
+  .auth-form {
+    position: absolute; top: calc(100% + 8px); right: 0;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    padding: 16px; border-radius: 8px; box-shadow: var(--shadow-md);
+    display: none; min-width: 260px; z-index: 100;
+  }
+  .auth-form.open { display: block; }
+  .auth-form label {
+    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 6px;
+  }
+  .auth-form input {
+    width: 100%; padding: 8px 10px; font-family: inherit; font-size: 14px;
+    border: 1px solid var(--line-strong); border-radius: 5px; background: var(--bg);
+  }
+  .auth-form input:focus { outline: none; border-color: var(--accent); }
+  .auth-form .actions {
+    display: flex; gap: 8px; margin-top: 12px;
+  }
+  .auth-form .actions button {
+    flex: 1; padding: 8px; border: none; border-radius: 5px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+  }
+  .auth-form .submit { background: var(--ink); color: #fff; }
+  .auth-form .cancel { background: var(--bg); color: var(--ink-soft); border: 1px solid var(--line-strong); }
+  .auth-form .err {
+    color: var(--bad); font-size: 12px; margin-top: 8px; display: none;
+  }
+  .auth-form .err.show { display: block; }
+
+  /* ─── Tabs ─────────────────────────────────────────────── */
+  .tabs {
+    display: flex; gap: 0; margin: 24px 0 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    background: none; border: none; cursor: pointer;
+    padding: 12px 18px; font-family: inherit;
+    font-size: 14px; font-weight: 600; color: var(--ink-muted);
+    position: relative; transition: color 0.15s;
+  }
+  .tab:hover { color: var(--ink-soft); }
+  .tab.active { color: var(--ink); }
+  .tab.active::after {
+    content: ""; position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 2px; background: var(--ink);
+  }
+
+  /* ─── View panels ──────────────────────────────────────── */
+  .view { display: none; padding-top: 24px; }
+  .view.active { display: block; }
+
+  /* Common: control row + filters */
+  .controls {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 16px;
+  }
+  .control-group {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .control-group label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--ink-muted);
+  }
+  .input, .select {
+    padding: 9px 12px; font-family: inherit; font-size: 14px;
+    border: 1px solid var(--line-strong); border-radius: 6px;
+    background: var(--surface); color: var(--ink);
+    min-width: 180px;
+  }
+  .input:focus, .select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .input.search { min-width: 320px; }
+
+  /* Counter chip */
+  .counter {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-muted);
+  }
+
+  /* ─── Tables (shared) ──────────────────────────────────── */
+  .tbl-wrap {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr { background: var(--ink); }
+  thead th {
+    padding: 10px 12px; text-align: left;
+    color: #fff; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.6px; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  thead th.right { text-align: right; }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { background: var(--accent); }
+  thead th .sort-arrow { opacity: 0.5; margin-left: 4px; font-size: 9px; }
+  thead th.sorted .sort-arrow { opacity: 1; }
+  tbody tr { border-top: 1px solid var(--line); }
+  tbody tr:nth-child(even) { background: rgba(232, 228, 221, 0.18); }
+  tbody td {
+    padding: 9px 12px; vertical-align: middle;
+  }
+  tbody td.right { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  tbody td.product {
+    font-weight: 600; color: var(--ink); max-width: 320px;
+  }
+  tbody td.product .pcode {
+    display: block; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-muted); font-weight: 400; margin-top: 2px;
+  }
+  tbody td.empty { color: var(--ink-muted); text-align: center; }
+
+  /* State-price cells (cross-state grid) */
+  td.price-cell { font-family: 'JetBrains Mono', monospace; text-align: right; }
+  td.price-cell.cheapest { background: var(--good-soft); color: var(--good); font-weight: 600; }
+  td.price-cell.priciest { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
+  td.price-cell.empty { color: var(--ink-muted); }
+
+  /* Editable price cells (admin) */
+  .price-edit-wrap {
+    display: inline-flex; align-items: baseline; gap: 4px;
+    position: relative;
+  }
+  .edit-icon {
+    visibility: hidden; cursor: pointer;
+    background: none; border: none; padding: 0 4px;
+    font-size: 11px; color: var(--admin);
+  }
+  body.is-admin tr:hover .edit-icon { visibility: visible; }
+  body.is-admin tr:hover .edit-icon:hover { color: var(--ink); }
+  .price-edit-input {
+    width: 80px; padding: 3px 6px;
+    border: 1px solid var(--admin); border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    background: var(--admin-soft);
+    text-align: right;
+  }
+  .price-edit-input:focus { outline: none; box-shadow: 0 0 0 3px var(--admin-soft); }
+
+  /* Empty/loading states */
+  .placeholder {
+    padding: 40px 20px; text-align: center; color: var(--ink-muted);
+    background: var(--surface); border: 1px dashed var(--line-strong);
+    border-radius: 8px;
+  }
+  .placeholder strong { display: block; color: var(--ink-soft); font-size: 15px; margin-bottom: 4px; }
+
+  .loader {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--line-strong); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toasts */
+  .toasts {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 1000; display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--ink); color: #fff;
+    padding: 10px 18px; border-radius: 6px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-md);
+    animation: toast-in 0.2s ease-out;
+    pointer-events: auto;
+  }
+  .toast.ok    { background: var(--good); }
+  .toast.error { background: var(--bad); }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+  /* Cheapest view subtabs */
+  .subtabs {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .subtab {
+    padding: 6px 14px; background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: 9999px; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: 500; color: var(--ink-soft);
+  }
+  .subtab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* Win-count bars in "per state" sub-view */
+  .winbar {
+    display: inline-block; height: 8px; background: var(--accent-soft);
+    border-radius: 2px; vertical-align: middle; margin-right: 8px;
+  }
+  .winbar > i {
+    display: block; height: 100%; background: var(--accent); border-radius: 2px;
+  }
+
+  /* Responsive cramping */
+  @media (max-width: 720px) {
+    .shell { padding: 0 12px 60px; }
+    .top { padding: 16px 0 12px; }
+    .brand h1 { font-size: 22px; }
+    .tabs { overflow-x: auto; }
+    .controls { gap: 8px; }
+    .input.search { min-width: 200px; }
+    table { font-size: 12px; }
+    thead th, tbody td { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Header -->
+  <div class="top">
+    <div class="brand">
+      <h1>ABC Pricing Database</h1>
+      <div class="sub" id="meta-line">Loading…</div>
+    </div>
+    <div class="top-right">
+      <button class="refresh-btn" id="refresh-btn" onclick="refresh()">↻ Refresh</button>
+      <div class="auth">
+        <button class="auth-btn" id="auth-btn" onclick="toggleAuthForm()">Log In</button>
+        <div class="auth-form" id="auth-form">
+          <label for="auth-pw">Admin password</label>
+          <input id="auth-pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+          <div class="actions">
+            <button class="cancel" onclick="closeAuthForm()">Cancel</button>
+            <button class="submit" onclick="doLogin()">Log in</button>
+          </div>
+          <div class="err" id="auth-err"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="product"  onclick="switchTab('product')">By Product</button>
+    <button class="tab"        data-tab="state"    onclick="switchTab('state')">By State + Category</button>
+    <button class="tab"        data-tab="cheapest" onclick="switchTab('cheapest')">Cheapest Analysis</button>
+  </div>
+
+  <!-- VIEW 1: By Product (cross-state comparison) -->
+  <div class="view active" id="view-product">
+    <div class="controls">
+      <div class="control-group">
+        <label for="prod-search">Search</label>
+        <input class="input search" id="prod-search" type="text"
+               placeholder="Product name, SKU, or part of either…"
+               oninput="renderProductView()">
+      </div>
+      <div class="counter mono" id="prod-counter"></div>
+    </div>
+    <div id="prod-results"></div>
+  </div>
+
+  <!-- VIEW 2: By State + Category -->
+  <div class="view" id="view-state">
+    <div class="controls">
+      <div class="control-group">
+        <label for="sc-state">State</label>
+        <select class="select" id="sc-state" onchange="renderStateView()"></select>
+      </div>
+      <div class="control-group">
+        <label for="sc-category">Category</label>
+        <select class="select" id="sc-category" onchange="renderStateView()"></select>
+      </div>
+      <div class="control-group">
+        <label for="sc-search">Refine</label>
+        <input class="input" id="sc-search" type="text" placeholder="Search within results…" oninput="renderStateView()">
+      </div>
+      <div class="counter mono" id="sc-counter"></div>
+    </div>
+    <div id="sc-results"></div>
+  </div>
+
+  <!-- VIEW 3: Cheapest Analysis -->
+  <div class="view" id="view-cheapest">
+    <div class="subtabs">
+      <button class="subtab active" data-sub="byproduct" onclick="switchCheap('byproduct')">Per product → cheapest state</button>
+      <button class="subtab"        data-sub="bystate"   onclick="switchCheap('bystate')">Per state → win count</button>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label for="cheap-search">Search</label>
+        <input class="input" id="cheap-search" type="text" placeholder="Filter by product…" oninput="renderCheapestView()">
+      </div>
+      <div class="counter mono" id="cheap-counter"></div>
+    </div>
+    <div id="cheap-results"></div>
+  </div>
+
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+  // ═══════════════════════════════════════════════════════════════════════
+  // ABC Pricing Database — frontend
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbz6oOiEQMiJFvr-f9gMO5Az0SGPzEqIibsrgWXEN6M173IMZUH94VPehGYzAAg9T-PdAQ/exec';
+  const TOKEN_KEY = 'abc_admin_token';
+  const APP_VERSION = '1.0.0';
+
+  // Module state
+  let DATA = null;             // full payload from backend
+  let STATES = [];             // ['AZ','IL',…]
+  let CATEGORIES = [];         // ['Coil Nail',…]
+  let CURRENT_TAB = 'product';
+  let CHEAP_SUB = 'byproduct'; // 'byproduct' | 'bystate'
+  let CHEAP_SORT = { key: 'savings', dir: 'desc' };
+
+  // ─── Helpers ────────────────────────────────────────────────
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const fmtMoney = (n) => (n == null || isNaN(n)) ? '' : '$' + Number(n).toFixed(2);
+
+  function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function setToken(t) {
+    if (t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+    else { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+    updateAdminUi();
+  }
+  function isAdmin() { return !!token(); }
+
+  function showToast(msg, kind) {
+    const wrap = $('#toasts');
+    const t = document.createElement('div');
+    t.className = 'toast' + (kind ? ' ' + kind : '');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function updateAdminUi() {
+    const btn = $('#auth-btn');
+    if (isAdmin()) {
+      btn.textContent = 'Admin';
+      btn.classList.add('logged-in');
+      btn.onclick = signOut;
+      document.body.classList.add('is-admin');
+    } else {
+      btn.textContent = 'Log In';
+      btn.classList.remove('logged-in');
+      btn.onclick = toggleAuthForm;
+      document.body.classList.remove('is-admin');
+    }
+  }
+
+  // ─── Backend ────────────────────────────────────────────────
+  async function apiGet(params) {
+    const qs = new URLSearchParams(params).toString();
+    const res = await fetch(BACKEND_URL + '?' + qs);
+    return res.json();
+  }
+  async function apiPost(body) {
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
+  // ─── Load data ──────────────────────────────────────────────
+  async function loadData(force) {
+    const refresh = $('#refresh-btn');
+    refresh.disabled = true; refresh.textContent = '↻ Loading…';
+    $('#meta-line').innerHTML = '<span class="loader"></span> Loading from sheet…';
+
+    try {
+      const data = await apiGet({ resource: 'data', _t: Date.now() });
+      if (data.error) {
+        $('#meta-line').textContent = 'Error: ' + data.error;
+        showToast('Failed to load data', 'error');
+        return;
+      }
+      DATA = data;
+      STATES = data.states || [];
+      CATEGORIES = data.categories || [];
+
+      populateStateView();
+      renderProductView();
+      renderStateView();
+      renderCheapestView();
+
+      const when = new Date(data.server_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      $('#meta-line').innerHTML =
+        `<strong>${data.counts.parents.toLocaleString()}</strong> products · ` +
+        `<strong>${data.counts.children.toLocaleString()}</strong> state-prices · ` +
+        `<strong>${STATES.length}</strong> states · loaded ${when}`;
+    } catch (err) {
+      $('#meta-line').textContent = 'Network error: ' + err.message;
+      showToast('Network error — try Refresh', 'error');
+    } finally {
+      refresh.disabled = false; refresh.textContent = '↻ Refresh';
+    }
+  }
+  function refresh() { loadData(true); }
+
+  // ─── Tab switching ──────────────────────────────────────────
+  function switchTab(tab) {
+    CURRENT_TAB = tab;
+    $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
+    if (tab === 'cheapest') renderCheapestView();
+  }
+  function switchCheap(sub) {
+    CHEAP_SUB = sub;
+    $$('.subtab').forEach(t => t.classList.toggle('active', t.dataset.sub === sub));
+    renderCheapestView();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // VIEW 1 — By Product (cross-state comparison)
+  // ═══════════════════════════════════════════════════════════════════════
+  function renderProductView() {
+    if (!DATA) return;
+    const q = $('#prod-search').value.trim().toLowerCase();
+    const counter = $('#prod-counter');
+    const out = $('#prod-results');
+
+    // No search yet → prompt
+    if (!q) {
+      counter.textContent = DATA.parents.length.toLocaleString() + ' products total — type to search';
+      out.innerHTML = `<div class="placeholder">
+        <strong>Search to begin</strong>
+        Type a product name or SKU. Results show prices in every state side-by-side, with the cheapest highlighted green and the most expensive in red.
+      </div>`;
+      return;
+    }
+
+    // Filter parents whose description OR any child's description matches
+    const matches = DATA.parents.filter(p => {
+      if (p.parent.toLowerCase().includes(q)) return true;
+      for (const c of p.children) {
+        if (c.child.toLowerCase().includes(q)) return true;
+      }
+      return false;
+    });
+
+    counter.textContent = matches.length.toLocaleString() + ' / ' + DATA.parents.length.toLocaleString() + ' products';
+
+    if (matches.length === 0) {
+      out.innerHTML = `<div class="placeholder">
+        <strong>No matches</strong>
+        Try a shorter or different search term.
+      </div>`;
+      return;
+    }
+
+    // Build a cross-state table: one row per matching parent
+    const stateCols = STATES;
+    out.innerHTML = `
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>PRODUCT</th>
+            <th>UOM</th>
+            ${stateCols.map(s => `<th class="right">${esc(s)}</th>`).join('')}
+          </tr></thead>
+          <tbody>
+            ${matches.map(p => renderProductRow(p, stateCols)).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderProductRow(p, stateCols) {
+    // Find min/max among children with valid prices
+    const prices = p.children.filter(c => c.price != null).map(c => c.price);
+    const min = prices.length ? Math.min(...prices) : null;
+    const max = prices.length ? Math.max(...prices) : null;
+
+    // For each state column, find the matching child for this parent (if any).
+    // A parent may have multiple children for a state if data is messy; show the first.
+    const byState = {};
+    p.children.forEach(c => { if (!byState[c.state]) byState[c.state] = c; });
+
+    // UOM: pull from the first child (they should all match within a parent)
+    const uom = p.children[0] ? p.children[0].uom : '';
+
+    // Parent code (last comma-separated chunk, often the SKU)
+    const parts = p.parent.split(',').map(s => s.trim());
+    const code = parts[parts.length - 1] || '';
+    const shortName = parts.slice(0, -1).join(', ') || p.parent;
+
+    return `
+      <tr>
+        <td class="product">
+          ${esc(shortName)}
+          ${code ? `<span class="pcode">${esc(code)}</span>` : ''}
+        </td>
+        <td class="mono">${esc(uom)}</td>
+        ${stateCols.map(s => {
+          const c = byState[s];
+          if (!c || c.price == null) return '<td class="price-cell empty">—</td>';
+          let cls = 'price-cell';
+          if (prices.length > 1) {
+            if (c.price === min) cls += ' cheapest';
+            else if (c.price === max) cls += ' priciest';
+          }
+          return `<td class="${cls}" data-row="${c.row}">
+            <span class="price-display">${fmtMoney(c.price)}</span>
+            <button class="edit-icon" title="Edit price" onclick="beginEdit(${c.row}, this)">✎</button>
+          </td>`;
+        }).join('')}
+      </tr>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // VIEW 2 — By State + Category
+  // ═══════════════════════════════════════════════════════════════════════
+  function populateStateView() {
+    const stEl = $('#sc-state');
+    stEl.innerHTML = '<option value="">— Select state —</option>' +
+      STATES.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    const catEl = $('#sc-category');
+    catEl.innerHTML = '<option value="">All categories</option>' +
+      CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  }
+
+  function renderStateView() {
+    if (!DATA) return;
+    const state = $('#sc-state').value;
+    const category = $('#sc-category').value;
+    const q = $('#sc-search').value.trim().toLowerCase();
+    const out = $('#sc-results');
+    const counter = $('#sc-counter');
+
+    if (!state) {
+      counter.textContent = '';
+      out.innerHTML = `<div class="placeholder">
+        <strong>Pick a state to begin</strong>
+        Once you pick a state, optionally narrow by category and search within the results.
+      </div>`;
+      return;
+    }
+
+    let rows = DATA.children.filter(c => c.state === state);
+    if (category) rows = rows.filter(c => c.category === category);
+    if (q) rows = rows.filter(c =>
+      c.child.toLowerCase().includes(q) ||
+      (c.parent && c.parent.toLowerCase().includes(q))
+    );
+
+    rows.sort((a, b) => a.parent.localeCompare(b.parent));
+
+    counter.textContent = rows.length.toLocaleString() + ' rows';
+
+    if (rows.length === 0) {
+      out.innerHTML = `<div class="placeholder">
+        <strong>No results</strong>
+        No products match the chosen state + category + search.
+      </div>`;
+      return;
+    }
+
+    out.innerHTML = `
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>PRODUCT</th>
+            <th>CATEGORY</th>
+            <th>UOM</th>
+            <th class="right">PRICE (${esc(state)})</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(c => {
+              const parts = c.parent.split(',').map(s => s.trim());
+              const code = parts[parts.length - 1] || '';
+              const shortName = parts.slice(0, -1).join(', ') || c.parent;
+              return `<tr>
+                <td class="product">${esc(shortName)}${code ? `<span class="pcode">${esc(code)}</span>` : ''}</td>
+                <td>${esc(c.category)}</td>
+                <td class="mono">${esc(c.uom)}</td>
+                <td class="price-cell" data-row="${c.row}">
+                  <span class="price-display">${fmtMoney(c.price)}</span>
+                  <button class="edit-icon" title="Edit price" onclick="beginEdit(${c.row}, this)">✎</button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // VIEW 3 — Cheapest Analysis
+  // ═══════════════════════════════════════════════════════════════════════
+  function renderCheapestView() {
+    if (!DATA) return;
+    if (CHEAP_SUB === 'byproduct') renderCheapByProduct();
+    else                            renderCheapByState();
+  }
+
+  function renderCheapByProduct() {
+    const q = $('#cheap-search').value.trim().toLowerCase();
+    const out = $('#cheap-results');
+    const counter = $('#cheap-counter');
+
+    // For each parent with 2+ priced children, compute cheapest state, range, savings
+    const rows = [];
+    DATA.parents.forEach(p => {
+      const priced = p.children.filter(c => c.price != null);
+      if (priced.length < 2) return;
+      let minC = priced[0], maxC = priced[0];
+      priced.forEach(c => {
+        if (c.price < minC.price) minC = c;
+        if (c.price > maxC.price) maxC = c;
+      });
+      if (minC.price === maxC.price) return;  // all same — uninteresting
+      rows.push({
+        parent: p.parent,
+        cheapest_state: minC.state,
+        cheapest_price: minC.price,
+        priciest_state: maxC.state,
+        priciest_price: maxC.price,
+        savings: maxC.price - minC.price,
+        savings_pct: (maxC.price - minC.price) / maxC.price,
+        states_count: priced.length,
+      });
+    });
+
+    // Filter by search
+    const filtered = q ? rows.filter(r => r.parent.toLowerCase().includes(q)) : rows;
+
+    // Sort
+    const dir = CHEAP_SORT.dir === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      const av = a[CHEAP_SORT.key];
+      const bv = b[CHEAP_SORT.key];
+      if (typeof av === 'string') return av.localeCompare(bv) * dir;
+      return (av - bv) * dir;
+    });
+
+    counter.textContent = filtered.length.toLocaleString() + ' products with price variation';
+
+    if (filtered.length === 0) {
+      out.innerHTML = `<div class="placeholder">
+        <strong>${q ? 'No matches' : 'No price variation found'}</strong>
+        ${q ? 'Try a different search term.' : 'All products are priced the same across all states they appear in.'}
+      </div>`;
+      return;
+    }
+
+    const arrow = (key) => {
+      if (CHEAP_SORT.key !== key) return '<span class="sort-arrow">▼</span>';
+      return `<span class="sort-arrow">${CHEAP_SORT.dir === 'asc' ? '▲' : '▼'}</span>`;
+    };
+    const sortable = (key) => CHEAP_SORT.key === key ? 'sortable sorted' : 'sortable';
+
+    out.innerHTML = `
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th class="${sortable('parent')}" onclick="sortCheap('parent')">PRODUCT ${arrow('parent')}</th>
+            <th>STATES</th>
+            <th class="${sortable('cheapest_state')}" onclick="sortCheap('cheapest_state')">CHEAPEST ${arrow('cheapest_state')}</th>
+            <th class="right ${sortable('cheapest_price')}" onclick="sortCheap('cheapest_price')">LOW ${arrow('cheapest_price')}</th>
+            <th>PRICIEST</th>
+            <th class="right">HIGH</th>
+            <th class="right ${sortable('savings')}" onclick="sortCheap('savings')">$ DIFF ${arrow('savings')}</th>
+            <th class="right ${sortable('savings_pct')}" onclick="sortCheap('savings_pct')">% DIFF ${arrow('savings_pct')}</th>
+          </tr></thead>
+          <tbody>
+            ${filtered.map(r => {
+              const parts = r.parent.split(',').map(s => s.trim());
+              const code = parts[parts.length - 1] || '';
+              const shortName = parts.slice(0, -1).join(', ') || r.parent;
+              return `<tr>
+                <td class="product">${esc(shortName)}${code ? `<span class="pcode">${esc(code)}</span>` : ''}</td>
+                <td class="mono">${r.states_count}</td>
+                <td><strong>${esc(r.cheapest_state)}</strong></td>
+                <td class="right" style="background:var(--good-soft);color:var(--good);font-weight:600;">${fmtMoney(r.cheapest_price)}</td>
+                <td>${esc(r.priciest_state)}</td>
+                <td class="right" style="color:var(--bad);">${fmtMoney(r.priciest_price)}</td>
+                <td class="right">${fmtMoney(r.savings)}</td>
+                <td class="right">${(r.savings_pct * 100).toFixed(1)}%</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function sortCheap(key) {
+    if (CHEAP_SORT.key === key) {
+      CHEAP_SORT.dir = CHEAP_SORT.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      CHEAP_SORT.key = key;
+      CHEAP_SORT.dir = (key === 'parent' || key === 'cheapest_state' || key === 'priciest_state') ? 'asc' : 'desc';
+    }
+    renderCheapByProduct();
+  }
+
+  function renderCheapByState() {
+    const out = $('#cheap-results');
+    const counter = $('#cheap-counter');
+    const q = $('#cheap-search').value.trim().toLowerCase();
+
+    // For each parent, find the cheapest state(s) (in case of tie, all win)
+    const wins = {};   // state -> count
+    const winsList = {};  // state -> list of products it won
+    STATES.forEach(s => { wins[s] = 0; winsList[s] = []; });
+
+    DATA.parents.forEach(p => {
+      const priced = p.children.filter(c => c.price != null);
+      if (priced.length < 2) return;
+      let min = Infinity;
+      priced.forEach(c => { if (c.price < min) min = c.price; });
+      const winners = priced.filter(c => c.price === min);
+      // If everyone ties, doesn't count
+      if (winners.length === priced.length) return;
+      winners.forEach(w => {
+        wins[w.state] = (wins[w.state] || 0) + 1;
+        winsList[w.state].push({ parent: p.parent, price: w.price });
+      });
+    });
+
+    const ordered = STATES.slice().sort((a, b) => (wins[b] || 0) - (wins[a] || 0));
+    const maxWins = Math.max(...ordered.map(s => wins[s] || 0), 1);
+
+    counter.textContent = 'Win count across all products with price variation';
+
+    out.innerHTML = `
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>STATE</th>
+            <th>WINS (CHEAPEST ON N PRODUCTS)</th>
+            <th class="right">COUNT</th>
+          </tr></thead>
+          <tbody>
+            ${ordered.map(s => `
+              <tr>
+                <td><strong>${esc(s)}</strong></td>
+                <td>
+                  <span class="winbar" style="width:240px;"><i style="width:${(wins[s] || 0) / maxWins * 100}%;"></i></span>
+                </td>
+                <td class="right mono">${(wins[s] || 0).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="placeholder" style="margin-top:16px;border-style:solid;background:var(--accent-soft);color:var(--accent);">
+        <strong>How to read this</strong>
+        For each product with multiple state prices, the state with the lowest price gets a "win". States with more wins consistently undercut on more products.
+      </div>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ADMIN: login / edit
+  // ═══════════════════════════════════════════════════════════════════════
+  function toggleAuthForm() {
+    const f = $('#auth-form');
+    const opened = f.classList.toggle('open');
+    if (opened) { $('#auth-err').classList.remove('show'); $('#auth-pw').focus(); }
+  }
+  function closeAuthForm() {
+    $('#auth-form').classList.remove('open');
+    $('#auth-pw').value = '';
+    $('#auth-err').classList.remove('show');
+  }
+
+  async function doLogin() {
+    const pw = $('#auth-pw').value;
+    if (!pw) return;
+    const err = $('#auth-err');
+    err.classList.remove('show');
+    const res = await apiPost({ action: 'login', password: pw });
+    if (res.error) {
+      err.textContent = res.error;
+      err.classList.add('show');
+      return;
+    }
+    setToken(res.token);
+    closeAuthForm();
+    showToast('Logged in as admin', 'ok');
+  }
+
+  async function signOut() {
+    const t = token();
+    if (t) await apiPost({ action: 'logout', token: t }).catch(() => {});
+    setToken(null);
+    showToast('Logged out');
+  }
+
+  // Click outside auth form closes it
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.auth')) closeAuthForm();
+  });
+
+  // ─── Inline price editing ──────────────────────────────────
+  function beginEdit(rowNum, btn) {
+    if (!isAdmin()) return;
+    const cell = btn.closest('td');
+    if (!cell || cell.dataset.editing === '1') return;
+    cell.dataset.editing = '1';
+
+    const display = cell.querySelector('.price-display');
+    const current = display.textContent.replace(/[^0-9.]/g, '');
+    const original = current;
+
+    cell.innerHTML = `<input class="price-edit-input mono" type="text" value="${esc(current)}" id="edit-${rowNum}">`;
+    const input = $('#edit-' + rowNum);
+    input.focus(); input.select();
+
+    let done = false;
+    const finish = async (save) => {
+      if (done) return;
+      done = true;
+      cell.removeAttribute('data-editing');
+      if (!save) {
+        restoreCell(cell, parseFloat(original), rowNum);
+        return;
+      }
+      const newVal = input.value.trim();
+      const num = parseFloat(newVal);
+      if (isNaN(num) || num < 0) {
+        showToast('Invalid price', 'error');
+        restoreCell(cell, parseFloat(original), rowNum);
+        return;
+      }
+      if (Math.abs(num - parseFloat(original)) < 0.001) {
+        restoreCell(cell, num, rowNum);
+        return;
+      }
+      const res = await apiPost({ action: 'saveprice', token: token(), row_index: rowNum, price: num });
+      if (res.error) {
+        showToast('Save failed: ' + res.error, 'error');
+        if (res.code === 'AUTH_REQUIRED') setToken(null);
+        restoreCell(cell, parseFloat(original), rowNum);
+        return;
+      }
+      showToast('Saved', 'ok');
+      restoreCell(cell, num, rowNum);
+      // Update local cache so the page reflects without a full refetch
+      updateLocalPrice(rowNum, num);
+      // Re-render the current view so cheapest/priciest highlights refresh
+      if (CURRENT_TAB === 'product') renderProductView();
+      else if (CURRENT_TAB === 'state') renderStateView();
+      else if (CURRENT_TAB === 'cheapest') renderCheapestView();
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') finish(true);
+      else if (e.key === 'Escape') finish(false);
+    });
+    input.addEventListener('blur', () => finish(true));
+  }
+
+  function restoreCell(cell, price, rowNum) {
+    cell.innerHTML = `
+      <span class="price-display">${fmtMoney(price)}</span>
+      <button class="edit-icon" title="Edit price" onclick="beginEdit(${rowNum}, this)">✎</button>
+    `;
+  }
+
+  function updateLocalPrice(rowNum, newPrice) {
+    if (!DATA) return;
+    for (const c of DATA.children) {
+      if (c.row === rowNum) { c.price = newPrice; break; }
+    }
+    // children inside parent.children are the same objects — already updated.
+  }
+
+  // ─── Boot ──────────────────────────────────────────────────
+  updateAdminUi();
+  loadData();
+</script>
+
+</body>
+</html>
