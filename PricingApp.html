@@ -1929,8 +1929,8 @@ document.addEventListener('DOMContentLoaded', () => {
     buildHeaderRow();
   });
 
-  // Filter chip dropdown toggle
-  document.querySelectorAll('.filter-chip[data-filter]').forEach(chip => {
+  // Filter chip dropdown toggle (includes special Region / Supplier Locations chips)
+  document.querySelectorAll('.filter-chip[data-filter], .filter-chip[data-special-filter]').forEach(chip => {
     chip.addEventListener('click', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.closest('.dropdown')) return;
       const wasOpen = chip.classList.contains('open');
