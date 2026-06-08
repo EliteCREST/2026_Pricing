@@ -125,6 +125,36 @@
   }
   .filter-chip:hover { background: var(--gray-200); }
   .filter-chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* Primary (region / supplier-location) filters — visually distinct, eye-catching */
+  .filter-chip.primary-filter {
+    background: linear-gradient(135deg, #1F5FAD, #1B2A4A);
+    color: #fff;
+    border: 1px solid #C9A961;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 18px;
+    box-shadow: 0 2px 6px rgba(31,95,173,0.25);
+    letter-spacing: 0.2px;
+  }
+  .filter-chip.primary-filter:hover {
+    background: linear-gradient(135deg, #2670c4, #22335a);
+    box-shadow: 0 3px 10px rgba(31,95,173,0.35);
+  }
+  .filter-chip.primary-filter.active {
+    background: linear-gradient(135deg, #C9A961, #b08f47);
+    color: #1B2A4A;
+    border-color: #1B2A4A;
+    box-shadow: 0 3px 10px rgba(201,169,97,0.45);
+  }
+  .filter-chip.primary-filter .count { opacity: 0.95; }
+  .filter-chip.primary-filter .dropdown { color: var(--gray-900); }
+  .toolbar-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--gray-300);
+    margin: 2px 4px;
+  }
   .filter-chip .count { opacity: 0.7; margin-left: 4px; }
   .filter-chip .dropdown {
     display: none;
@@ -633,7 +663,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5.1</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5.2</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -703,6 +733,9 @@
 
 
 <div class="toolbar">
+  <div class="filter-chip primary-filter" data-special-filter="Region">📍 Region <span class="count"></span></div>
+  <div class="filter-chip primary-filter" data-special-filter="Supplier Locations">🏢 Supplier Locations <span class="count"></span></div>
+  <span class="toolbar-divider"></span>
   <div class="search-box">
     <input type="search" id="searchInput" name="ecs_search_q" placeholder="Search across all columns…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true">
   </div>
@@ -841,6 +874,10 @@ const state = {
   sortDir: 'asc',
   search: '',
   filters: {},
+  searchFilters: [],
+  specialFilters: { 'Region': new Set(), 'Supplier Locations': new Set() },
+  regionPairs: {},
+  locationPairs: {},
   editingRow: null,
   isAddingRow: false,
   serverTime: null
@@ -919,6 +956,8 @@ function applyBootstrap(data) {
   state.typeCodes = data.typeCodes || [];
   state.skuChart = data.skuChart || [];
   state.colorChart = data.colorChart || [];
+  state.searchFilters = data.searchFilters || [];
+  buildSpecialFilterLookups();
   state.serverTime = data.serverTime;
   checkVersion(data.latestVersion);
   document.getElementById('totalCount').textContent = state.rows.length;
@@ -929,6 +968,26 @@ function applyBootstrap(data) {
   applyFiltersAndRender();
   buildFilterChips();
   buildHeaderRow();
+}
+
+function buildSpecialFilterLookups() {
+  state.regionPairs = {};
+  state.locationPairs = {};
+  (state.searchFilters || []).forEach(r => {
+    const st = String(r['State'] || '').trim();
+    const sup = String(r['Supplier'] || '').trim();
+    const region = String(r['Region'] || '').trim();
+    const loc = String(r['Supplier Locations'] || '').trim();
+    if (!st || !sup) return;
+    const pair = { st, sup };
+    if (region) (state.regionPairs[region] = state.regionPairs[region] || []).push(pair);
+    if (loc) (state.locationPairs[loc] = state.locationPairs[loc] || []).push(pair);
+  });
+}
+function _pairMatches(row, pairs) {
+  const st = String(row.ST || '').trim();
+  const sup = String(row.SUPPLIER || '').trim();
+  return pairs.some(p => p.st === st && p.sup === sup);
 }
 
 function compareRowsDefault(a, b) {
@@ -957,6 +1016,19 @@ function applyFiltersAndRender() {
       if (!vals || vals.size === 0) continue;
       const v = (row[col] == null ? '' : String(row[col]));
       if (!vals.has(v)) return false;
+    }
+    // Special filters (Region / Supplier Locations) — match by (ST, SUPPLIER)
+    const regSel = state.specialFilters['Region'];
+    if (regSel && regSel.size) {
+      let pairs = [];
+      regSel.forEach(rg => { pairs = pairs.concat(state.regionPairs[rg] || []); });
+      if (!_pairMatches(row, pairs)) return false;
+    }
+    const locSel = state.specialFilters['Supplier Locations'];
+    if (locSel && locSel.size) {
+      let pairs = [];
+      locSel.forEach(lc => { pairs = pairs.concat(state.locationPairs[lc] || []); });
+      if (!_pairMatches(row, pairs)) return false;
     }
     // Search
     if (q) {
@@ -1033,6 +1105,36 @@ function buildFilterChips() {
     });
     dd.appendChild(clearBtn);
   });
+
+  // Special chips: Region + Supplier Locations (options from Search Filters tab)
+  document.querySelectorAll('.filter-chip[data-special-filter]').forEach(chip => {
+    const key = chip.dataset.specialFilter;
+    const srcMap = key === 'Region' ? state.regionPairs : state.locationPairs;
+    const sorted = Object.keys(srcMap).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    let dd = chip.querySelector('.dropdown');
+    if (!dd) { dd = document.createElement('div'); dd.className='dropdown'; chip.appendChild(dd); }
+    dd.innerHTML = '';
+    sorted.forEach(v => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" data-val="${escapeHtml(v)}"> <span>${escapeHtml(v)}</span>`;
+      dd.appendChild(label);
+      label.querySelector('input').addEventListener('change', (e) => {
+        e.stopPropagation();
+        if (e.target.checked) state.specialFilters[key].add(v);
+        else state.specialFilters[key].delete(v);
+        applyFiltersAndRender();
+      });
+    });
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear-btn'; clearBtn.textContent = 'Clear';
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.specialFilters[key].clear();
+      dd.querySelectorAll('input').forEach(cb => cb.checked = false);
+      applyFiltersAndRender();
+    });
+    dd.appendChild(clearBtn);
+  });
 }
 
 function updateFilterUI() {
@@ -1057,6 +1159,13 @@ function updateFilterUI() {
   }
   document.getElementById('activeFilters').textContent =
     parts.length ? ' · Filters: ' + parts.join(' | ') : '';
+  document.querySelectorAll('.filter-chip[data-special-filter]').forEach(chip => {
+    const key = chip.dataset.specialFilter;
+    const count = state.specialFilters[key] ? state.specialFilters[key].size : 0;
+    const countEl = chip.querySelector('.count');
+    if (count > 0) { chip.classList.add('active'); countEl.textContent = `(${count})`; }
+    else { chip.classList.remove('active'); countEl.textContent = ''; }
+  });
 }
 
 // ============================================================
@@ -1811,6 +1920,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.filters[k]) state.filters[k].clear();
     }
     document.querySelectorAll('.filter-chip .dropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+    Object.values(state.specialFilters).forEach(s => s.clear());
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('open'));
     // Clear sort
     state.sortBy = null;
@@ -1870,7 +1980,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.5.1';
+  const APP_VERSION = 'v1.5.2';
   let isUnlocked = false;
 
   function showLogin() {
