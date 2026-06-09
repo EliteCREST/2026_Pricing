@@ -663,7 +663,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5.2</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5.3</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -878,6 +878,7 @@ const state = {
   specialFilters: { 'Region': new Set(), 'Supplier Locations': new Set() },
   regionPairs: {},
   locationPairs: {},
+  regionLocations: {},
   editingRow: null,
   isAddingRow: false,
   serverTime: null
@@ -944,7 +945,7 @@ function checkVersion(latest) {
     const c = cur[i] || 0, l = lat[i] || 0;
     if (l > c) {
       _versionToastShown = true;
-      toast(`Update available — v${String(latest).replace(/^v/i,'')} is out. Refresh to update.`, 'success');
+      toast(`New version v${String(latest).replace(/^v/i,'')} available. Please hard refresh (Ctrl+Shift+R) to update.`, 'success', 12000);
       return;
     }
     if (l < c) return;
@@ -973,6 +974,7 @@ function applyBootstrap(data) {
 function buildSpecialFilterLookups() {
   state.regionPairs = {};
   state.locationPairs = {};
+  state.regionLocations = {};
   (state.searchFilters || []).forEach(r => {
     const st = String(r['State'] || '').trim();
     const sup = String(r['Supplier'] || '').trim();
@@ -982,6 +984,7 @@ function buildSpecialFilterLookups() {
     const pair = { st, sup };
     if (region) (state.regionPairs[region] = state.regionPairs[region] || []).push(pair);
     if (loc) (state.locationPairs[loc] = state.locationPairs[loc] || []).push(pair);
+    if (region && loc) (state.regionLocations[region] = state.regionLocations[region] || new Set()).add(loc);
   });
 }
 function _pairMatches(row, pairs) {
@@ -1108,33 +1111,70 @@ function buildFilterChips() {
 
   // Special chips: Region + Supplier Locations (options from Search Filters tab)
   document.querySelectorAll('.filter-chip[data-special-filter]').forEach(chip => {
-    const key = chip.dataset.specialFilter;
-    const srcMap = key === 'Region' ? state.regionPairs : state.locationPairs;
-    const sorted = Object.keys(srcMap).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-    let dd = chip.querySelector('.dropdown');
-    if (!dd) { dd = document.createElement('div'); dd.className='dropdown'; chip.appendChild(dd); }
-    dd.innerHTML = '';
-    sorted.forEach(v => {
-      const label = document.createElement('label');
-      label.innerHTML = `<input type="checkbox" data-val="${escapeHtml(v)}"> <span>${escapeHtml(v)}</span>`;
-      dd.appendChild(label);
-      label.querySelector('input').addEventListener('change', (e) => {
-        e.stopPropagation();
-        if (e.target.checked) state.specialFilters[key].add(v);
-        else state.specialFilters[key].delete(v);
-        applyFiltersAndRender();
-      });
-    });
-    const clearBtn = document.createElement('button');
-    clearBtn.className = 'clear-btn'; clearBtn.textContent = 'Clear';
-    clearBtn.addEventListener('click', (e) => {
+    populateSpecialChip(chip);
+  });
+}
+
+// Returns the list of Supplier Locations valid for the current Region selection.
+// If no region is selected, returns all locations.
+function _allowedLocations() {
+  const regSel = state.specialFilters['Region'];
+  if (!regSel || regSel.size === 0) return Object.keys(state.locationPairs);
+  const allowed = new Set();
+  regSel.forEach(rg => {
+    const set = state.regionLocations[rg];
+    if (set) set.forEach(loc => allowed.add(loc));
+  });
+  return Array.from(allowed);
+}
+
+// Build (or rebuild) one special chip's dropdown.
+function populateSpecialChip(chip) {
+  const key = chip.dataset.specialFilter;
+  let optionList;
+  if (key === 'Region') {
+    optionList = Object.keys(state.regionPairs);
+  } else { // Supplier Locations — narrow to selected region(s)
+    optionList = _allowedLocations();
+  }
+  const sorted = optionList.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+
+  let dd = chip.querySelector('.dropdown');
+  if (!dd) { dd = document.createElement('div'); dd.className='dropdown'; chip.appendChild(dd); }
+  dd.innerHTML = '';
+  sorted.forEach(v => {
+    const checked = state.specialFilters[key].has(v) ? 'checked' : '';
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" data-val="${escapeHtml(v)}" ${checked}> <span>${escapeHtml(v)}</span>`;
+    dd.appendChild(label);
+    label.querySelector('input').addEventListener('change', (e) => {
       e.stopPropagation();
-      state.specialFilters[key].clear();
-      dd.querySelectorAll('input').forEach(cb => cb.checked = false);
+      if (e.target.checked) state.specialFilters[key].add(v);
+      else state.specialFilters[key].delete(v);
+      // When a Region is toggled, rebuild Supplier Locations to match and drop invalid picks
+      if (key === 'Region') {
+        const allowed = new Set(_allowedLocations());
+        const locSel = state.specialFilters['Supplier Locations'];
+        Array.from(locSel).forEach(loc => { if (!allowed.has(loc)) locSel.delete(loc); });
+        const locChip = document.querySelector('.filter-chip[data-special-filter="Supplier Locations"]');
+        if (locChip) populateSpecialChip(locChip);
+      }
       applyFiltersAndRender();
     });
-    dd.appendChild(clearBtn);
   });
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'clear-btn'; clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    state.specialFilters[key].clear();
+    dd.querySelectorAll('input').forEach(cb => cb.checked = false);
+    if (key === 'Region') {
+      const locChip = document.querySelector('.filter-chip[data-special-filter="Supplier Locations"]');
+      if (locChip) populateSpecialChip(locChip);
+    }
+    applyFiltersAndRender();
+  });
+  dd.appendChild(clearBtn);
 }
 
 function updateFilterUI() {
@@ -1852,11 +1892,12 @@ function showLoading(text) {
 function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('show');
 }
-function toast(msg, type = '') {
+function toast(msg, type = '', duration = 3000) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'toast show ' + type;
-  setTimeout(() => el.classList.remove('show'), 3000);
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
 function showConfirm(title, msg, onOk) {
   document.getElementById('confirmTitle').textContent = title;
@@ -1980,7 +2021,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.5.2';
+  const APP_VERSION = 'v1.5.3';
   let isUnlocked = false;
 
   function showLogin() {
