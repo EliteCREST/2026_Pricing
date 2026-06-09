@@ -95,6 +95,36 @@
     border-bottom: 1px solid var(--gray-200);
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   }
+  .export-wrap { position: relative; display: inline-block; }
+  .export-menu {
+    display: none;
+    position: absolute;
+    top: 100%; right: 0;
+    background: #fff;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    box-shadow: var(--shadow-lg);
+    margin-top: 4px;
+    min-width: 210px;
+    z-index: 150;
+    padding: 4px 0;
+    overflow: hidden;
+  }
+  .export-wrap.open .export-menu { display: block; }
+  .export-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--gray-900);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .export-menu button:hover { background: var(--blue-bg); color: var(--blue); }
   .search-box {
     flex: 0 0 280px;
     position: relative;
@@ -747,9 +777,14 @@
   <div class="filter-chip" data-filter="Color">Color <span class="count"></span></div>
   <div class="filter-chip" data-filter="Price UOM">UOM <span class="count"></span></div>
   <button class="action secondary" id="colPickerBtn">⚙ Columns</button>
-  <button class="action secondary" id="exportBtn">⬇ Export Current Filter</button>
-  <button class="action secondary" id="exportViewBtn">⬇ Export Current View</button>
-  <button class="action secondary" id="exportAllBtn">⬇ Export All Data</button>
+  <div class="export-wrap">
+    <button class="action secondary" id="exportMenuBtn">⬇ Export ▾</button>
+    <div class="export-menu" id="exportMenu">
+      <button type="button" id="exportBtn">⬇ Export Current Filter</button>
+      <button type="button" id="exportViewBtn">⬇ Export Current View</button>
+      <button type="button" id="exportAllBtn">⬇ Export All Data</button>
+    </div>
+  </div>
   <button class="action" id="addRowBtn">+ Add Row</button>
 </div>
 
@@ -2047,6 +2082,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('exportBtn').addEventListener('click', exportCSV);
   document.getElementById('exportViewBtn').addEventListener('click', exportCurrentView);
   document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
+  // Export dropdown: toggle open/close
+  const exportWrap = document.querySelector('.export-wrap');
+  document.getElementById('exportMenuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    exportWrap.classList.toggle('open');
+  });
+  // Picking an export option closes the menu
+  exportWrap.querySelectorAll('.export-menu button').forEach(b => {
+    b.addEventListener('click', () => exportWrap.classList.remove('open'));
+  });
+  // Click outside closes it
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.export-wrap')) exportWrap.classList.remove('open');
+  });
   document.getElementById('colPickerBtn').addEventListener('click', toggleColPicker);
   document.getElementById('editPanelClose').addEventListener('click', closeEditPanel);
   document.getElementById('cancelBtn').addEventListener('click', closeEditPanel);
