@@ -832,6 +832,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyb9WFx1OOuNtst5xixAhyg
 const CACHE_KEY = 'ecs_pricing_v1';
 const PREFS_KEY = 'ecs_pricing_special_prefs_v1';  // persists Region + Supplier Locations per browser
 const REFRESH_INTERVAL_MS = 30000;
+const APP_VERSION = 'v1.5.4';
 
 function safeCache(obj) {
   try {
@@ -2062,7 +2063,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN AUTH
   // ============================================================
-  const APP_VERSION = 'v1.5.4';
   let isUnlocked = false;
 
   function showLogin() {
