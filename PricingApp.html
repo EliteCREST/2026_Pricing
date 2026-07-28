@@ -693,7 +693,7 @@
 <body>
 
 <header>
-  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5.5</span></h1>
+  <h1>ECS <span class="accent">Pricing Data Manager</span><span class="version-pill" id="versionPill">v1.5.4</span></h1>
   <div class="status">
     <span class="status-dot" id="connStatus"></span>
     <span id="connText">Connecting…</span>
@@ -814,6 +814,7 @@
   <div class="edit-panel-body" id="editPanelBody">
     <!-- fields populated dynamically -->
   </div>
+  <input type="hidden" data-field="Description Code">
   <div class="edit-panel-footer">
     <button class="delete" id="deleteBtn">🗑 Delete</button>
     <button class="cancel" id="cancelBtn">Cancel</button>
@@ -867,7 +868,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyb9WFx1OOuNtst5xixAhyg
 const CACHE_KEY = 'ecs_pricing_v1';
 const PREFS_KEY = 'ecs_pricing_special_prefs_v1';  // persists Region + Supplier Locations per browser
 const REFRESH_INTERVAL_MS = 30000;
-const APP_VERSION = 'v1.5.5';
+const APP_VERSION = 'v1.5.4';
 
 function safeCache(obj) {
   try {
@@ -917,9 +918,9 @@ function restoreSpecialPrefs() {
 // NOTE: 'Elite Code for Blaze' is intentionally NOT in this list — it's still read
 // from the underlying data for grouping logic, but not shown in the picker or table.
 const ALL_COLUMNS = [
-  'SUPPLIER','ST','Branch ID','Item #','Item Color','Item Final','Trade Type',
-  'Type','Type Code','Description','Description Code','Brand','BrandLine',
-  'Elite Product Name','Measurement','Color','Color Code','Price UOM',
+  'SUPPLIER','ST','Item #','Item Color','Item Final','Trade Type',
+  'Type','Type Code','Description','Brand',
+  'Elite Product Name','Color','Color Code','Price UOM',
   'Current Price','Price Sheet'
 ];
 
@@ -928,9 +929,9 @@ const DEFAULT_VISIBLE = new Set([
   'Color','Price UOM','Current Price'
 ]);
 
-const DERIVED_FIELDS = new Set(['Type Code','Description Code','Color Code','Item #','Item Color','Elite Code for Blaze']);
+const DERIVED_FIELDS = new Set(['Type Code','Color Code','Item #','Item Color','Elite Code for Blaze']);
 const NUMERIC_FIELDS = new Set(['Current Price']);
-const CODE_FIELDS = new Set(['Type Code','Description Code','Color Code','Elite Code for Blaze','Item #','Item Color','Item Final']);
+const CODE_FIELDS = new Set(['Type Code','Color Code','Elite Code for Blaze','Item #','Item Color','Item Final']);
 
 // ============================================================
 // STATE
@@ -1514,11 +1515,11 @@ function openEditPanel(row, isAdd = false) {
 
   // Group fields logically
   const groups = [
-    { title: 'Source', fields: ['SUPPLIER','ST','Branch ID','Price Sheet'] },
+    { title: 'Source', fields: ['SUPPLIER','ST','Price Sheet'] },
     { title: 'Item', fields: ['Item Final','Item #','Item Color'] },
-    { title: 'Product', fields: ['Type','Brand','BrandLine','Description','Elite Product Name','Measurement'] },
+    { title: 'Product', fields: ['Type','Brand','Description','Elite Product Name'] },
     { title: 'Color & Pricing', fields: ['Color','Price UOM','Current Price'] },
-    { title: 'Derived Codes (auto)', fields: ['Type Code','Description Code','Color Code','Elite Code for Blaze'] }
+    { title: 'Derived Codes (auto)', fields: ['Type Code','Color Code','Elite Code for Blaze'] }
   ];
 
   groups.forEach(g => {
@@ -1528,6 +1529,7 @@ function openEditPanel(row, isAdd = false) {
     g.fields.forEach(f => groupDiv.appendChild(buildField(f, formData)));
     body.appendChild(groupDiv);
   });
+  setFieldValue('Description Code', formData['Description Code'] || '');
 
   document.getElementById('editPanel').classList.add('open');
 }
