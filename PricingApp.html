@@ -814,7 +814,6 @@
   <div class="edit-panel-body" id="editPanelBody">
     <!-- fields populated dynamically -->
   </div>
-  <input type="hidden" data-field="Description Code">
   <div class="edit-panel-footer">
     <button class="delete" id="deleteBtn">🗑 Delete</button>
     <button class="cancel" id="cancelBtn">Cancel</button>
@@ -1529,7 +1528,6 @@ function openEditPanel(row, isAdd = false) {
     g.fields.forEach(f => groupDiv.appendChild(buildField(f, formData)));
     body.appendChild(groupDiv);
   });
-  setFieldValue('Description Code', formData['Description Code'] || '');
 
   document.getElementById('editPanel').classList.add('open');
 }
@@ -1616,11 +1614,6 @@ function recomputeDerived() {
     const tc = state.typeCodes.find(t => t.Type === fd['Type']);
     if (tc) setFieldValue('Type Code', tc.Code);
   }
-  // Description Code from EPN
-  if (fd['Elite Product Name']) {
-    const sku = state.skuChart.find(s => s['Elite Product Name'] === fd['Elite Product Name']);
-    if (sku) setFieldValue('Description Code', sku.Slug);
-  }
   // Color Code from Color
   if (fd['Color']) {
     const cc = state.colorChart.find(c => c['Color Name'] === fd['Color']);
@@ -1653,17 +1646,12 @@ function recomputeDerived() {
   // Blaze Code
   const tc = (document.querySelector('[data-field="Type Code"]')?.value || '').trim();
   const br = (document.querySelector('[data-field="Brand"]')?.value || '').trim();
-  const dc = (document.querySelector('[data-field="Description Code"]')?.value || '').trim();
   const cc = (document.querySelector('[data-field="Color Code"]')?.value || '').trim();
-  setFieldValue('Elite Code for Blaze', buildBlazeCode(tc, br, dc, cc));
+  setFieldValue('Elite Code for Blaze', buildBlazeCode(tc, br, cc));
 }
 
-function buildBlazeCode(tc, br, dc, cc) {
-  let slugLen;
-  if (br.length === 2) slugLen = 13;
-  else if (br.length === 3) slugLen = 12;
-  else slugLen = Math.max(0, 15 - br.length);
-  return `${tc}-${br}-${padOrTrunc(dc, slugLen, 'X')}-${padOrTrunc(cc, 6, 'X')}`;
+function buildBlazeCode(tc, br, cc) {
+  return `${tc}-${br}-${padOrTrunc(cc, 6, 'X')}`;
 }
 
 function padOrTrunc(s, n, p) {
